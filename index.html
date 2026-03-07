@@ -27,12 +27,17 @@
 .pulseLunch{animation:ringPulseRed 2s infinite ease-in-out;}
 .pulseFree{animation:ringPulseGray 2s infinite ease-in-out;}
 
-/* ================= CURRENT CLASS HIGHLIGHT ================= */
+/* ================= HIGHLIGHT STYLES ================= */
 .currentClass{
 background:#fff0f5;
 box-shadow:0 0 15px rgba(255,51,133,0.4);
 font-weight:bold;
 transition:all .3s ease;
+}
+
+/* AQUAMARINE FOR PREP PERIODS */
+.prepPeriod {
+  color: #20b2aa !important; /* Aquamarine */
 }
 
 .periodTime {
@@ -63,7 +68,7 @@ transition:all .3s ease;
 
 /* ================= THEME ================= */
 body{
-background:#ffe6f2; /* Kitty Pink */
+background:#ffe6f2; 
 font-family:'Malgun Gothic', Arial;
 color:#ff4d94;
 text-align:center;
@@ -76,7 +81,7 @@ h2{margin:10px 0;cursor:pointer; color:#ff1a75;}
 canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9;}
 #periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
 #info{margin-top:20px; font-size:18px;}
-#weather,#air{font-weight:bold;margin-top:5px; color:#ff66a3;}
+#weather,#air{font-weight:bold; margin-top:5px; color:#ff66a3;}
 table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:400px; background:white; border-radius:15px; overflow:hidden;}
 th,td{padding:10px;border-bottom:1px solid #ffe6f2;}
 th{color:white; background:#ffb3d9;}
@@ -107,7 +112,7 @@ th{color:white; background:#ffb3d9;}
 #weekTable th { background: #ffcce6; color: #ff3385; padding: 8px; }
 #weekTable td { padding: 10px; border-top: 1px solid #ffe6f2; color: #ff4d94; font-size: 13px; }
 
-.lunchRed { color: #ff6b6b; font-size: 11px; font-weight: bold; }
+.lunchRed { color: #ff1a75; font-size: 11px; font-weight: bold; }
 </style>
 </head>
 
@@ -138,25 +143,24 @@ th{color:white; background:#ffb3d9;}
   <th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th>
 </tr>
 <tr>
-  <td>1</td><td>수학</td><td>수학</td><td>국어</td><td>영어</td><td>국어</td>
+  <td>1교시</td><td>수학</td><td>수학</td><td>국어</td><td><span class="prepPeriod">영어</span></td><td>국어</td>
 </tr>
 <tr>
-  <td>2</td><td>국어</td><td>체육</td><td>수학</td><td>국어</td><td>체육</td>
+  <td>2교시</td><td>국어</td><td><span class="prepPeriod">체육</span></td><td>수학</td><td>국어</td><td><span class="prepPeriod">체육</span></td>
 </tr>
 <tr>
-  <td>3</td><td>영어</td><td>국어</td><td>사회</td><td>수학</td><td>사회</td>
+  <td>3교시</td><td><span class="prepPeriod">영어</span></td><td>국어</td><td>사회</td><td>수학</td><td>사회</td>
 </tr>
 <tr>
-  <td>4</td><td>과학</td><td>사회</td><td>실과</td><td>과학</td><td>과학</td>
+  <td>4교시</td><td><span class="prepPeriod">과학</span><br><span class="lunchRed">점심 12:00-13:00</span></td><td>사회<br><span class="lunchRed">점심 12:00-13:00</span></td><td>실과<br><span class="lunchRed">점심 12:00-13:00</span></td><td><span class="prepPeriod">과학</span><br><span class="lunchRed">점심 12:00-13:00</span></td><td>과학<br><span class="lunchRed">점심 12:00-13:00</span></td>
 </tr>
 <tr>
-  <td>5</td><td>음악</td><td>미술</td><td>영어</td><td>실과</td><td>도덕</td>
+  <td>5교시</td><td>음악</td><td>미술</td><td><span class="prepPeriod">영어</span></td><td>실과</td><td><span class="prepPeriod">도덕</span></td>
 </tr>
 <tr>
-  <td>6</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td>
+  <td>6교시</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td>
 </tr>
 </table>
-<p style="font-size:11px; color:#ff99cc; margin-top:10px;">* 닫으려면 화면을 클릭하세요 *</p>
 </div>
 </div>
 
@@ -214,7 +218,12 @@ if (!blocks) {
     p.appendChild(timeSpan); p.appendChild(document.createTextNode(b.label));
     let c = document.createElement("td");
     if (b.type === "class") {
-        c.textContent = (schedule[todayEn] || [])[classIndex] || "-";
+        let subject = (schedule[todayEn] || [])[classIndex] || "-";
+        c.textContent = subject;
+        const preps = ["영어", "체육", "도덕"];
+        if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) {
+            c.classList.add("prepPeriod");
+        }
         classIndex++;
     }
     if (b.type === "lunch") { c.innerHTML = '<span class="lunchText">맛있는 점심 🍱</span>'; }
@@ -241,10 +250,9 @@ function drawClock(){
     let now = new Date();
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
-
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
 
-    /* DARK PINK TICKS */
+    /* TICKS - DARK PINK */
     for(let i=0;i<60;i++){
         let angle=i*Math.PI/30; let len=i%5==0?15:7;
         let x1=150+Math.cos(angle)*(113-len); let y1=150+Math.sin(angle)*(113-len);
@@ -256,14 +264,36 @@ function drawClock(){
     let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
     let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
 
+    // Prep Time Check (8:30am - 4:30pm Mon-Fri)
+    const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
+    const isWorkHours = (mins >= 510 && mins <= 990);
+
     if(active){
         label = active.label;
         color = active.type==="break" ? "#00bfff" : "#ff1a75";
+        
+        // Check if current class is a "Prep" subject to change ring color
+        if (active.type === "class") {
+            let classIdx = blocks.filter((b, i) => b.type === "class" && blocks.indexOf(b) < blocks.indexOf(active)).length;
+            let subject = (schedule[todayEn] || [])[classIdx];
+            const preps = ["영어", "체육", "도덕"];
+            if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) {
+                color = "#20b2aa"; // Aquamarine
+            }
+        }
+        
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else if (blocks) {
         let nextBlock = blocks.find(b => mins < toMin(b.start));
-        if(nextBlock){ label = `다음 수업 → ${nextBlock.label}`; total = toMin(nextBlock.start) - mins; remain = total; }
+        if(nextBlock){ 
+            label = (isWorkday && isWorkHours) ? `수업 준비 시간 → ${nextBlock.label} ☕` : `자유 시간 → ${nextBlock.label} 🎀`;
+            color = (isWorkday && isWorkHours) ? "#20b2aa" : "#ffb3d9";
+            total = toMin(nextBlock.start) - mins; remain = total; 
+        } else {
+            label = (isWorkday && isWorkHours) ? "수업 준비 시간 ☕" : "자유 시간 🎀";
+            color = (isWorkday && isWorkHours) ? "#20b2aa" : "#ffb3d9";
+        }
     } else {
         color = "#ff66a3"; label = "🎀 주말 최고 🎀";
         let friday = new Date(now); let day = friday.getDay(); 
@@ -282,7 +312,7 @@ function drawClock(){
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
     ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText(`${ampm} ${h}:${m}:${s}`, 150, 150);
+    ctx.fillText(`${h}:${m}:${s} ${ampm}`, 150, 150);
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 }
@@ -307,22 +337,26 @@ function startEmojiRain() {
 startEmojiRain();
 
 async function loadWeather(){
-  try {
-    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Dangjin,kr&appid=${API_KEY}&units=metric`);
-    const data = await res.json();
-    const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
-    document.getElementById("weather").textContent=`🎀 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
-  } catch { document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
+try{
+const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
+const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
+const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+const data=await res.json();
+const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
+document.getElementById("weather").textContent=`🎀 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
+}catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
 
 async function loadAir(){
-  try {
-    const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=36.89&lon=126.63&appid=${API_KEY}`);
-    const data = await res.json(); const aqi=data.list[0].main.aqi;
-    const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-    document.getElementById("air").textContent=`🌸 미세먼지: ${levels[aqi-1]}`;
-  } catch { document.getElementById("air").textContent="미세먼지 확인 불가 🌸"; }
+try{
+const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
+const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
+const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+const data=await res.json(); const aqi=data.list[0].main.aqi;
+const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
+document.getElementById("air").textContent=`🌸 미세먼지: ${levels[aqi-1]}`;
+}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 🌸"; }
 }
 loadAir();
 
