@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>헬로키티 선생님 타이머</title>
+
+<style>
+/* ================= 헬로키티 테마 디자인 ================= */
+body {
+  background: #ffe6f2; /* 연분홍 배경 */
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  color: #ff4d94;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+h2 { margin: 10px 0; cursor: pointer; color: #ff1a75; text-shadow: 1px 1px white; font-size: 28px; }
+
+#clockBox { margin: auto; width: 320px; }
+canvas { background: white; border-radius: 50%; box-shadow: 0 0 25px #ffb3d9; border: 8px solid #ffb3d9; }
+
+#periodLabel { font-size: 24px; font-weight: bold; margin-top: 15px; color: #ff3385; }
+
+#info { margin-top: 20px; font-size: 18px; color: #ff66a3; background: white; border-radius: 15px; padding: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(255, 179, 217, 0.3); }
+#weather, #air { font-weight: bold; margin-top: 5px; }
+
+table { margin: auto; margin-top: 20px; border-collapse: collapse; width: 95%; max-width: 400px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 15px rgba(255, 179, 217, 0.5); }
+th, td { padding: 12px; border-bottom: 1px solid #ffe6f2; }
+th { background: #ffb3d9; color: white; font-size: 18px; }
+td { color: #ff4d94; font-size: 18px; font-weight: bold; }
+
+.currentClass { background: #fff0f5; box-shadow: inset 0 0 15px rgba(255, 51, 133, 0.2); color: #ff0066; }
+
+/* ================= 아이콘 비 애니메이션 ================= */
+.falling-emoji { position: fixed; top: -50px; z-index: 9999; pointer-events: none; font-size: 26px; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+/* 전체 시간표 팝업 */
+#weekPopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 230, 242, 0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
+#weekBox { background: white; padding: 25px; border-radius: 30px; width: 90%; max-width: 550px; border: 4px solid #ffb3d9; }
+#weekTable { width: 100%; border-collapse: collapse; }
+#weekTable th { background: #ffcce6; color: #ff3385; font-size: 14px; }
+#weekTable td { border-top: 1px solid #ffcce6; font-size: 14px; padding: 8px; color: #666; }
+</style>
+</head>
+
+<body>
+
+<h2 id="today"></h2>
+
+<div id="clockBox">
+<canvas id="clock" width="300" height="300"></canvas>
+</div>
+
+<div id="periodLabel">수업 정보를 불러오는 중...</div>
+
+<div id="info">
+<div id="weather">🎀 날씨 확인 중...</div>
+<div id="air">🌸 미세먼지 확인 중...</div>
+</div>
+
+<table id="scheduleTable">
+<tr><th>교시</th><th>과목</th></tr>
+</table>
+
+<div id="weekPopup">
+<div id="weekBox">
+<h3 style="color:#ff1a75">🎀 5학년 주간 시간표 🎀</h3>
+<table id="weekTable">
+<tr><th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
+<tr><td>1</td><td>수학</td><td>수학</td><td>국어</td><td>영어</td><td>국어</td></tr>
+<tr><td>2</td><td>국어</td><td>체육</td><td>수학</td><td>국어</td><td>체육</td></tr>
+<tr><td>3</td><td>영어</td><td>국어</td><td>사회</td><td>수학</td><td>사회</td></tr>
+<tr><td>4</td><td>과학</td><td>사회</td><td>실과</td><td>과학</td><td>과학</td></tr>
+<tr><td>5</td><td>음악</td><td>미술</td><td>영어</td><td>실과</td><td>도덕</td></tr>
+<tr><td>6</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td></tr>
+</table>
+<p style="font-size: 12px; color: #ff99cc; margin-top: 10px;">* 닫으려면 아무데나 클릭하세요 *</p>
+</div>
+</div>
+
+<script>
+const API_KEY="fa9fe37b9be14839fe6774643939e974";
+
+// 친구분의 5학년 한국어 시간표
+const schedule = {
+  Monday: ["수학", "국어", "영어", "과학", "음악", "창체"],
+  Tuesday: ["수학", "체육", "국어", "사회", "미술", "미술"],
+  Wednesday: ["국어", "수학", "사회", "실과", "영어"],
+  Thursday: ["영어", "국어", "수학", "과학", "실과", "음악"],
+  Friday: ["국어", "체육", "사회", "과학(교실)", "도덕", "창체"]
+};
+
+const dayNames = {
+  Monday: "월요일", Tuesday: "화요일", Wednesday: "수요일",
+  Thursday: "목요일", Friday: "금요일", Saturday: "토요일", Sunday: "일요일"
+};
+
+const now = new Date();
+const todayEn = now.toLocaleDateString('en-US', { weekday: 'long' });
+document.getElementById("today").textContent = `🎀 ${dayNames[todayEn]} 🎀`;
+
+const table = document.getElementById("scheduleTable");
+
+// 5학년 고정 일과 (목/금 스타일 lunch 12:00-13:00)
+const standardDay = [
+    { type: "class", label: "1교시", start: "09:00", end: "09:40" },
+    { type: "break", start: "09:40", end: "09:50" },
+    { type: "class", label: "2교시", start: "09:50", end: "10:30" },
+    { type: "break", start: "10:30", end: "10:40" },
+    { type: "class", label: "3교시", start: "10:40", end: "11:20" },
+    { type: "class", label: "4교시", start: "11:20", end: "12:00" },
+    { type: "lunch", label: "점심시간", start: "12:00", end: "13:10" },
+    { type: "class", label: "5교시", start: "13:10", end: "13:50" },
+    { type: "break", start: "13:50", end: "14:00" },
+    { type: "class", label: "6교시", start: "14:00", end: "14:40" }
+];
+
+const dailyBlocks = {
+  Monday: standardDay,
+  Tuesday: standardDay,
+  Wednesday: standardDay.slice(0, 7), // 수요일은 4교시 후 점심먹고 하교 기준
+  Thursday: standardDay,
+  Friday: standardDay
+};
+
+const blocks = dailyBlocks[todayEn];
+
+if (!blocks) {
+  table.innerHTML = "<tr><td colspan='2' style='font-size:24px; padding: 40px;'>🎀 즐거운 주말 🎀</td></tr>";
+} else {
+  let classIndex = 0;
+  blocks.forEach((b) => {
+    if (b.type === "break") return;
+    let row = document.createElement("tr");
+    row.dataset.start = b.start; row.dataset.end = b.end;
+    let p = document.createElement("td"); p.textContent = b.label;
+    let c = document.createElement("td");
+    if (b.type === "class") {
+        c.textContent = (schedule[todayEn] || [])[classIndex] || "-";
+        classIndex++;
+    } else {
+        c.innerHTML = '<span style="color: #ff3399;">맛있는 점심 🍱</span>';
+    }
+    row.appendChild(p); row.appendChild(c);
+    table.appendChild(row);
+  });
+}
+
+function updateCurrentClass(){
+  const n = new Date();
+  const minutesNow = n.getHours()*60 + n.getMinutes();
+  document.querySelectorAll("#scheduleTable tr").forEach(row => {
+    const start = row.dataset.start; const end = row.dataset.end;
+    if(!start) return;
+    const [sh,sm] = start.split(":").map(Number); const [eh,em] = end.split(":").map(Number);
+    row.classList.toggle("currentClass", minutesNow >= (sh*60+sm) && minutesNow < (eh*60+em));
+  });
+}
+setInterval(updateCurrentClass, 10000); updateCurrentClass();
+
+/* ================= 시계 드로잉 ================= */
+const canvas = document.getElementById("clock");
+const ctx = canvas.getContext("2d");
+function toMin(t){ let [h,m] = t.split(":"); return h*60+m; }
+
+function drawClock(){
+    let now = new Date();
+    let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+    ctx.clearRect(0,0,300,300);
+    ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
+
+    let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
+    let label = "자유 시간 🎀"; let color = "#ffb3d9";
+    let total = 0; let remain = 0;
+
+    if(active){
+        label = active.label; color = "#ff3399";
+        total = toMin(active.end) - toMin(active.start);
+        remain = toMin(active.end) - mins;
+    } else if (blocks) {
+        let next = blocks.find(b => mins < toMin(b.start));
+        if(next) { label = `다음: ${next.label}`; total = toMin(next.start) - mins; remain = total; }
+    } else { label = "주말은 쉬는 날! 🎀"; total = 1; remain = 1; }
+
+    if(total > 0){
+        ctx.beginPath(); ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + (remain/total)*2*Math.PI);
+        ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.stroke();
+    }
+
+    let h = now.getHours();
+    let m = now.getMinutes().toString().padStart(2,"0");
+    let s = now.getSeconds().toString().padStart(2,"0");
+    let ampm = h >= 12 ? "오후" : "오전";
+    h = h % 12 || 12;
+    ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center";
+    ctx.fillText(`${ampm} ${h}:${m}:${s}`, 150, 150);
+    document.getElementById("periodLabel").textContent = label;
+}
+setInterval(drawClock, 100);
+
+/* ================= 헬로키티 비 엔진 ================= */
+function startEmojiRain() {
+  setInterval(() => {
+    const today = new Date().getDay();
+    if (today === 0 || today === 6) { // 주말에만 작동
+      const now = new Date();
+      const isPooTime = (now.getDay() === 0 && now.getHours() >= 21);
+      const emojis = isPooTime ? ['💩'] : ['🐱', '🎀', '🌸', '💖', '✨'];
+      const e = document.createElement('div');
+      e.className = 'falling-emoji';
+      e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      e.style.left = Math.random() * 100 + 'vw';
+      e.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      document.body.appendChild(e);
+      setTimeout(() => e.remove(), 5000);
+    }
+  }, 350);
+}
+startEmojiRain();
+
+async function loadWeather(){
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Dangjin,kr&appid=${API_KEY}&units=metric`);
+    const data = await res.json();
+    const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
+    document.getElementById("weather").textContent=`🎀 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
+  } catch { document.getElementById("weather").textContent="날씨를 가져올 수 없어요 🎀"; }
+}
+loadWeather();
+
+document.getElementById("today").onclick=()=>{ document.getElementById("weekPopup").style.display="flex"; }
+document.getElementById("weekPopup").onclick=()=>{ document.getElementById("weekPopup").style.display="none"; }
+</script>
+</body>
+</html>
