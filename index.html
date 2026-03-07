@@ -6,53 +6,12 @@
 <title>Hello Kitty Teacher Timer</title>
 
 <style>
-/* ================= COUNTDOWN RING PULSE ================= */
+/* ================= ANIMATIONS ================= */
 @keyframes ringPulseRed{
 0%{filter:drop-shadow(0 0 3px rgba(255,51,133,.6));}
 50%{filter:drop-shadow(0 0 18px rgba(255,51,133,1));}
 100%{filter:drop-shadow(0 0 3px rgba(255,51,133,.6));}
 }
-@keyframes ringPulseBlue{
-0%{filter:drop-shadow(0 0 3px rgba(0,191,255,.6));}
-50%{filter:drop-shadow(0 0 18px rgba(0,191,255,1));}
-100%{filter:drop-shadow(0 0 3px rgba(0,191,255,.6));}
-}
-@keyframes ringPulseGray{
-0%{filter:drop-shadow(0 0 3px rgba(255,179,217,.5));}
-50%{filter:drop-shadow(0 0 12px rgba(255,179,217,.9));}
-100%{filter:drop-shadow(0 0 3px rgba(255,179,217,.5));}
-}
-.pulseClass{animation:ringPulseRed 2s infinite ease-in-out;}
-.pulseBreak{animation:ringPulseBlue 2s infinite ease-in-out;}
-.pulseLunch{animation:ringPulseRed 2s infinite ease-in-out;}
-.pulseFree{animation:ringPulseGray 2s infinite ease-in-out;}
-
-/* ================= HIGHLIGHT STYLES ================= */
-.currentClass{
-background:#fff0f5;
-box-shadow:0 0 15px rgba(255,51,133,0.4);
-font-weight:bold;
-transition:all .3s ease;
-}
-
-/* AQUAMARINE FOR PREP PERIODS */
-.prepPeriod {
-  color: #20b2aa !important; /* Aquamarine */
-}
-
-.periodTime {
-  font-size: 10px;
-  color: #ff99cc;
-  margin-right: 5px;
-  display: none;
-}
-
-#scheduleTable td:hover .periodTime,
-#scheduleTable td:active .periodTime {
-  display: inline;
-}
-
-/* ================= EMOJI RAIN ================= */
 .falling-emoji {
   position: fixed;
   top: -50px;
@@ -61,12 +20,11 @@ transition:all .3s ease;
   font-size: 24px;
   animation: fall linear forwards;
 }
-
 @keyframes fall {
   to { transform: translateY(110vh) rotate(360deg); }
 }
 
-/* ================= THEME ================= */
+/* ================= THEME & LAYOUT ================= */
 body{
 background:#ffe6f2; 
 font-family:'Malgun Gothic', Arial;
@@ -82,12 +40,16 @@ canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178
 #periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
 #info{margin-top:20px; font-size:18px;}
 #weather,#air{font-weight:bold; margin-top:5px; color:#ff66a3;}
+
 table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:400px; background:white; border-radius:15px; overflow:hidden;}
 th,td{padding:10px;border-bottom:1px solid #ffe6f2;}
 th{color:white; background:#ffb3d9;}
-.activeRowClass{background:rgba(255,0,102,.15);}
-.activeRowLunch{background:rgba(255,102,178,.25);}
-.lunchText{color:#ff3399;font-weight:bold;}
+
+.currentClass{ background:#fff0f5; box-shadow:0 0 15px rgba(255,51,133,0.4); font-weight:bold; }
+.prepPeriod { color: #20b2aa !important; } /* Aquamarine */
+.lunchText { color: #ff3399; font-weight: bold; }
+.periodTime { font-size: 10px; color: #ff99cc; margin-right: 5px; display: none; }
+#scheduleTable td:hover .periodTime, #scheduleTable td:active .periodTime { display: inline; }
 
 /* WEEK POPUP */
 #weekPopup {
@@ -96,7 +58,6 @@ th{color:white; background:#ffb3d9;}
   background: rgba(255, 230, 242, 0.9);
   display: none; align-items: center; justify-content: center; z-index: 1000;
 }
-
 #weekBox {
   background: white;
   padding: 20px;
@@ -106,13 +67,10 @@ th{color:white; background:#ffb3d9;}
   color: #ff4d94;
   border: 4px solid #ffb3d9;
 }
-
 #weekBox h3 { margin-top: 0; text-align: center; color: #ff1a75; }
 #weekTable { width: 100%; border-collapse: collapse; text-align: center; }
 #weekTable th { background: #ffcce6; color: #ff3385; padding: 8px; }
 #weekTable td { padding: 10px; border-top: 1px solid #ffe6f2; color: #ff4d94; font-size: 13px; }
-
-.lunchRed { color: #ff1a75; font-size: 11px; font-weight: bold; }
 </style>
 </head>
 
@@ -139,27 +97,13 @@ th{color:white; background:#ffb3d9;}
 <div id="weekBox">
 <h3>🎀 5학년 주간 시간표 🎀</h3>
 <table id="weekTable">
-<tr>
-  <th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th>
-</tr>
-<tr>
-  <td>1교시</td><td>수학</td><td>수학</td><td>국어</td><td><span class="prepPeriod">영어</span></td><td>국어</td>
-</tr>
-<tr>
-  <td>2교시</td><td>국어</td><td><span class="prepPeriod">체육</span></td><td>수학</td><td>국어</td><td><span class="prepPeriod">체육</span></td>
-</tr>
-<tr>
-  <td>3교시</td><td><span class="prepPeriod">영어</span></td><td>국어</td><td>사회</td><td>수학</td><td>사회</td>
-</tr>
-<tr>
-  <td>4교시</td><td><span class="prepPeriod">과학</span><br><span class="lunchRed">점심 12:00-13:00</span></td><td>사회<br><span class="lunchRed">점심 12:00-13:00</span></td><td>실과<br><span class="lunchRed">점심 12:00-13:00</span></td><td><span class="prepPeriod">과학</span><br><span class="lunchRed">점심 12:00-13:00</span></td><td>과학<br><span class="lunchRed">점심 12:00-13:00</span></td>
-</tr>
-<tr>
-  <td>5교시</td><td>음악</td><td>미술</td><td><span class="prepPeriod">영어</span></td><td>실과</td><td><span class="prepPeriod">도덕</span></td>
-</tr>
-<tr>
-  <td>6교시</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td>
-</tr>
+<tr><th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
+<tr><td>1교시</td><td>수학</td><td>수학</td><td>국어</td><td><span class="prepPeriod">영어</span></td><td>국어</td></tr>
+<tr><td>2교시</td><td>국어</td><td><span class="prepPeriod">체육</span></td><td>수학</td><td>국어</td><td><span class="prepPeriod">체육</span></td></tr>
+<tr><td>3교시</td><td><span class="prepPeriod">영어</span></td><td>국어</td><td>사회</td><td>수학</td><td>사회</td></tr>
+<tr><td>4교시</td><td><span class="prepPeriod">과학</span></td><td>사회</td><td>실과</td><td><span class="prepPeriod">과학</span></td><td>과학</td></tr>
+<tr><td>5교시</td><td>음악</td><td>미술</td><td><span class="prepPeriod">영어</span></td><td>실과</td><td><span class="prepPeriod">도덕</span></td></tr>
+<tr><td>6교시</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td></tr>
 </table>
 </div>
 </div>
@@ -184,27 +128,25 @@ const now = new Date();
 const todayEn = now.toLocaleDateString('en-US', { weekday: 'long' });
 document.getElementById("today").textContent = `🎀 ${dayNames[todayEn] || todayEn} 🎀`;
 
-const table = document.getElementById("scheduleTable");
-const standardDay = [
+// TIME CONFIGURATION
+const blocks = [
     { type: "class", label: "1교시", start: "09:00", end: "09:40" },
     { type: "break", start: "09:40", end: "09:50" },
     { type: "class", label: "2교시", start: "09:50", end: "10:30" },
     { type: "break", start: "10:30", end: "10:40" },
     { type: "class", label: "3교시", start: "10:40", end: "11:20" },
-    { type: "class", label: "4교시", start: "11:20", end: "12:00" },
-    { type: "lunch", label: "점심시간", start: "12:00", end: "13:00" },
+    { type: "break", start: "11:20", end: "11:30" },
+    { type: "class", label: "4교시", start: "11:30", end: "12:10" },
+    { type: "lunch", label: "점심시간", start: "12:10", end: "13:10" },
     { type: "class", label: "5교시", start: "13:10", end: "13:50" },
     { type: "break", start: "13:50", end: "14:00" },
     { type: "class", label: "6교시", start: "14:00", end: "14:40" }
 ];
 
-const dailyBlocks = {
-  Monday: standardDay, Tuesday: standardDay, Wednesday: standardDay.slice(0, 7), Thursday: standardDay, Friday: standardDay
-};
+const table = document.getElementById("scheduleTable");
+const isWeekend = (todayEn === "Saturday" || todayEn === "Sunday");
 
-const blocks = dailyBlocks[todayEn];
-
-if (!blocks) {
+if (isWeekend) {
   table.innerHTML = "<tr><td colspan='2' style='font-size:22px; padding:30px;'>🎀 즐거운 주말 🎀</td></tr>";
 } else {
   let classIndex = 0;
@@ -217,6 +159,7 @@ if (!blocks) {
     timeSpan.className = "periodTime"; timeSpan.textContent = `${b.start}-${b.end}`;
     p.appendChild(timeSpan); p.appendChild(document.createTextNode(b.label));
     let c = document.createElement("td");
+
     if (b.type === "class") {
         let subject = (schedule[todayEn] || [])[classIndex] || "-";
         c.textContent = subject;
@@ -225,22 +168,23 @@ if (!blocks) {
             c.classList.add("prepPeriod");
         }
         classIndex++;
+    } else if (b.type === "lunch") {
+        c.innerHTML = '<span class="lunchText">맛있는 점심 🍱</span>';
     }
-    if (b.type === "lunch") { c.innerHTML = '<span class="lunchText">맛있는 점심 🍱</span>'; }
     row.appendChild(p); row.appendChild(c);
     table.appendChild(row);
   });
 }
 
 function updateCurrentClass(){
-const now=new Date(); const minutesNow=now.getHours()*60+now.getMinutes();
-document.querySelectorAll("#scheduleTable tr").forEach(row=>{
-const start=row.dataset.start; const end=row.dataset.end; if(!start||!end) return;
-const [sh,sm]=start.split(":").map(Number); const [eh,em]=end.split(":").map(Number);
-row.classList.toggle("currentClass", minutesNow >= (sh*60+sm) && minutesNow < (eh*60+em));
-});
+  const now=new Date(); const minsNow=now.getHours()*60+now.getMinutes();
+  document.querySelectorAll("#scheduleTable tr").forEach(row=>{
+    const start=row.dataset.start; const end=row.dataset.end; if(!start) return;
+    const [sh,sm]=start.split(":").map(Number); const [eh,em]=end.split(":").map(Number);
+    row.classList.toggle("currentClass", minsNow >= (sh*60+sm) && minsNow < (eh*60+em));
+  });
 }
-setInterval(updateCurrentClass,10000); updateCurrentClass();
+setInterval(updateCurrentClass, 10000); updateCurrentClass();
 
 const canvas=document.getElementById("clock");
 const ctx=canvas.getContext("2d");
@@ -252,7 +196,7 @@ function drawClock(){
     ctx.clearRect(0,0,300,300);
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
 
-    /* TICKS - DARK PINK */
+    /* TICKS */
     for(let i=0;i<60;i++){
         let angle=i*Math.PI/30; let len=i%5==0?15:7;
         let x1=150+Math.cos(angle)*(113-len); let y1=150+Math.sin(angle)*(113-len);
@@ -261,46 +205,43 @@ function drawClock(){
         ctx.strokeStyle="#ff80bf"; ctx.lineWidth=i%5==0?3:1; ctx.stroke();
     }
   
-    let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
+    let active = blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end));
     let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
 
-    // Prep Time Check (8:30am - 4:30pm Mon-Fri)
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
-    const isWorkHours = (mins >= 510 && mins <= 990);
+    const isWorkHours = (mins >= 510 && mins <= 990); // 08:30 - 16:30
 
     if(active){
         label = active.label;
         color = active.type==="break" ? "#00bfff" : "#ff1a75";
-        
-        // Check if current class is a "Prep" subject to change ring color
         if (active.type === "class") {
             let classIdx = blocks.filter((b, i) => b.type === "class" && blocks.indexOf(b) < blocks.indexOf(active)).length;
             let subject = (schedule[todayEn] || [])[classIdx];
             const preps = ["영어", "체육", "도덕"];
-            if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) {
-                color = "#20b2aa"; // Aquamarine
-            }
+            if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) color = "#20b2aa";
         }
-        
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
-    } else if (blocks) {
+    } else if (!isWeekend) {
         let nextBlock = blocks.find(b => mins < toMin(b.start));
         if(nextBlock){ 
             label = (isWorkday && isWorkHours) ? `수업 준비 시간 → ${nextBlock.label} ☕` : `자유 시간 → ${nextBlock.label} 🎀`;
             color = (isWorkday && isWorkHours) ? "#20b2aa" : "#ffb3d9";
             total = toMin(nextBlock.start) - mins; remain = total; 
         } else {
-            label = (isWorkday && isWorkHours) ? "수업 준비 시간 ☕" : "자유 시간 🎀";
-            color = (isWorkday && isWorkHours) ? "#20b2aa" : "#ffb3d9";
+            // Check for late-day prep time (post 14:40)
+            if(isWorkday && isWorkHours && mins > toMin("14:40")) {
+              label = "퇴근까지 남은 시간 🏡";
+              color = "#20b2aa";
+              total = toMin("16:30") - toMin("14:40");
+              remain = toMin("16:30") - mins;
+            } else {
+              label = (isWorkday && isWorkHours) ? "수업 준비 시간 ☕" : "자유 시간 🎀";
+              color = (isWorkday && isWorkHours) ? "#20b2aa" : "#ffb3d9";
+            }
         }
     } else {
         color = "#ff66a3"; label = "🎀 주말 최고 🎀";
-        let friday = new Date(now); let day = friday.getDay(); 
-        let diffToFri = (day >= 5) ? (day - 5) : (day + 2);
-        friday.setDate(now.getDate() - diffToFri); friday.setHours(16, 30, 0, 0);
-        let monday = new Date(friday); monday.setDate(friday.getDate() + 3); monday.setHours(8, 30, 0, 0);
-        total = monday.getTime() - friday.getTime(); remain = monday.getTime() - now.getTime();
     }
 
     if(total > 0){
@@ -320,13 +261,10 @@ setInterval(drawClock, 100);
 
 function startEmojiRain() {
   setInterval(() => {
-    if (!blocks) {
-      const now = new Date();
-      const isPooTime = (now.getDay() === 0 && now.getHours() >= 21);
-      const emojis = isPooTime ? ['💩'] : ['🐱', '🎀', '🌸', '💖', '✨'];
+    if (isWeekend) {
       const e = document.createElement('div');
       e.className = 'falling-emoji';
-      e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      e.textContent = ['🐱', '🎀', '🌸', '💖', '✨'][Math.floor(Math.random() * 5)];
       e.style.left = Math.random() * 100 + 'vw';
       e.style.animationDuration = (Math.random() * 3 + 2) + 's';
       document.body.appendChild(e);
@@ -336,6 +274,7 @@ function startEmojiRain() {
 }
 startEmojiRain();
 
+/* WEATHER & AIR */
 async function loadWeather(){
 try{
 const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
