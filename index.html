@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>헬로키티 선생님 타이머</title>
+<title>Hello Kitty Teacher Timer</title>
 
 <style>
-/* ================= 헬로키티 테마 디자인 ================= */
+/* ================= HELLO KITTY THEME ================= */
 body {
-  background: #ffe6f2; /* 연분홍 배경 */
+  background: #ffe6f2; 
   font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
   color: #ff4d94;
   text-align: center;
@@ -24,22 +24,46 @@ canvas { background: white; border-radius: 50%; box-shadow: 0 0 25px #ffb3d9; bo
 
 #periodLabel { font-size: 24px; font-weight: bold; margin-top: 15px; color: #ff3385; }
 
-#info { margin-top: 20px; font-size: 18px; color: #ff66a3; background: white; border-radius: 15px; padding: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(255, 179, 217, 0.3); }
+#info { 
+  margin-top: 20px; 
+  font-size: 18px; 
+  color: #ff66a3; 
+  background: white; 
+  border-radius: 15px; 
+  padding: 10px; 
+  display: inline-block; 
+  box-shadow: 0 4px 6px rgba(255, 179, 217, 0.3); 
+}
 #weather, #air { font-weight: bold; margin-top: 5px; }
 
-table { margin: auto; margin-top: 20px; border-collapse: collapse; width: 95%; max-width: 400px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 15px rgba(255, 179, 217, 0.5); }
+table { 
+  margin: auto; 
+  margin-top: 20px; 
+  border-collapse: collapse; 
+  width: 95%; 
+  max-width: 400px; 
+  background: white; 
+  border-radius: 20px; 
+  overflow: hidden; 
+  box-shadow: 0 6px 15px rgba(255, 179, 217, 0.5); 
+}
 th, td { padding: 12px; border-bottom: 1px solid #ffe6f2; }
 th { background: #ffb3d9; color: white; font-size: 18px; }
 td { color: #ff4d94; font-size: 18px; font-weight: bold; }
 
 .currentClass { background: #fff0f5; box-shadow: inset 0 0 15px rgba(255, 51, 133, 0.2); color: #ff0066; }
 
-/* ================= 아이콘 비 애니메이션 ================= */
+/* ================= EMOJI RAIN ================= */
 .falling-emoji { position: fixed; top: -50px; z-index: 9999; pointer-events: none; font-size: 26px; animation: fall linear forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
 
-/* 전체 시간표 팝업 */
-#weekPopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 230, 242, 0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
+/* WEEK POPUP */
+#weekPopup { 
+  position: fixed; 
+  top: 0; left: 0; width: 100%; height: 100%; 
+  background: rgba(255, 230, 242, 0.95); 
+  display: none; align-items: center; justify-content: center; z-index: 1000; 
+}
 #weekBox { background: white; padding: 25px; border-radius: 30px; width: 90%; max-width: 550px; border: 4px solid #ffb3d9; }
 #weekTable { width: 100%; border-collapse: collapse; }
 #weekTable th { background: #ffcce6; color: #ff3385; font-size: 14px; }
@@ -78,14 +102,13 @@ td { color: #ff4d94; font-size: 18px; font-weight: bold; }
 <tr><td>5</td><td>음악</td><td>미술</td><td>영어</td><td>실과</td><td>도덕</td></tr>
 <tr><td>6</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td></tr>
 </table>
-<p style="font-size: 12px; color: #ff99cc; margin-top: 10px;">* 닫으려면 아무데나 클릭하세요 *</p>
+<p style="font-size: 12px; color: #ff99cc; margin-top: 10px;">* 닫으려면 화면을 클릭하세요 *</p>
 </div>
 </div>
 
 <script>
 const API_KEY="fa9fe37b9be14839fe6774643939e974";
 
-// 친구분의 5학년 한국어 시간표
 const schedule = {
   Monday: ["수학", "국어", "영어", "과학", "음악", "창체"],
   Tuesday: ["수학", "체육", "국어", "사회", "미술", "미술"],
@@ -105,7 +128,7 @@ document.getElementById("today").textContent = `🎀 ${dayNames[todayEn]} 🎀`;
 
 const table = document.getElementById("scheduleTable");
 
-// 5학년 고정 일과 (목/금 스타일 lunch 12:00-13:00)
+// Lunch 12:00-13:00 for the whole week
 const standardDay = [
     { type: "class", label: "1교시", start: "09:00", end: "09:40" },
     { type: "break", start: "09:40", end: "09:50" },
@@ -113,7 +136,7 @@ const standardDay = [
     { type: "break", start: "10:30", end: "10:40" },
     { type: "class", label: "3교시", start: "10:40", end: "11:20" },
     { type: "class", label: "4교시", start: "11:20", end: "12:00" },
-    { type: "lunch", label: "점심시간", start: "12:00", end: "13:10" },
+    { type: "lunch", label: "점심시간", start: "12:00", end: "13:00" },
     { type: "class", label: "5교시", start: "13:10", end: "13:50" },
     { type: "break", start: "13:50", end: "14:00" },
     { type: "class", label: "6교시", start: "14:00", end: "14:40" }
@@ -122,7 +145,7 @@ const standardDay = [
 const dailyBlocks = {
   Monday: standardDay,
   Tuesday: standardDay,
-  Wednesday: standardDay.slice(0, 7), // 수요일은 4교시 후 점심먹고 하교 기준
+  Wednesday: standardDay.slice(0, 7), 
   Thursday: standardDay,
   Friday: standardDay
 };
@@ -162,7 +185,7 @@ function updateCurrentClass(){
 }
 setInterval(updateCurrentClass, 10000); updateCurrentClass();
 
-/* ================= 시계 드로잉 ================= */
+/* ================= CLOCK DRAWING ================= */
 const canvas = document.getElementById("clock");
 const ctx = canvas.getContext("2d");
 function toMin(t){ let [h,m] = t.split(":"); return h*60+m; }
@@ -171,24 +194,47 @@ function drawClock(){
     let now = new Date();
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
+
+    // Face
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
+
+    // DARK PINK TICKS
+    for(let i=0; i<60; i++){
+        let angle = i * Math.PI/30;
+        let len = i % 5 === 0 ? 15 : 7;
+        let x1 = 150 + Math.cos(angle) * (125 - len);
+        let y1 = 150 + Math.sin(angle) * (125 - len);
+        let x2 = 150 + Math.cos(angle) * 125;
+        let y2 = 150 + Math.sin(angle) * 125;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = "#ff80bf"; // Readable Darker Pink
+        ctx.lineWidth = i % 5 === 0 ? 3 : 1;
+        ctx.stroke();
+    }
 
     let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
     let label = "자유 시간 🎀"; let color = "#ffb3d9";
     let total = 0; let remain = 0;
 
     if(active){
-        label = active.label; color = "#ff3399";
+        label = active.label; color = "#ff1a75";
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else if (blocks) {
         let next = blocks.find(b => mins < toMin(b.start));
         if(next) { label = `다음: ${next.label}`; total = toMin(next.start) - mins; remain = total; }
-    } else { label = "주말은 쉬는 날! 🎀"; total = 1; remain = 1; }
+    } else { label = "주말은 쉬는 날! 🎀"; total = 0; }
 
+    // FIXED COUNTDOWN ARC
     if(total > 0){
-        ctx.beginPath(); ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + (remain/total)*2*Math.PI);
-        ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.stroke();
+        let percent = remain / total;
+        let startAngle = -Math.PI / 2; // Top (12 o'clock)
+        let endAngle = startAngle + (percent * 2 * Math.PI);
+        ctx.beginPath(); 
+        ctx.arc(150, 150, 133, startAngle, endAngle);
+        ctx.lineWidth = 10; 
+        ctx.strokeStyle = color; 
+        ctx.stroke();
     }
 
     let h = now.getHours();
@@ -202,11 +248,10 @@ function drawClock(){
 }
 setInterval(drawClock, 100);
 
-/* ================= 헬로키티 비 엔진 ================= */
+/* ================= EMOJI RAIN ================= */
 function startEmojiRain() {
   setInterval(() => {
-    const today = new Date().getDay();
-    if (today === 0 || today === 6) { // 주말에만 작동
+    if (!blocks) {
       const now = new Date();
       const isPooTime = (now.getDay() === 0 && now.getHours() >= 21);
       const emojis = isPooTime ? ['💩'] : ['🐱', '🎀', '🌸', '💖', '✨'];
@@ -228,7 +273,7 @@ async function loadWeather(){
     const data = await res.json();
     const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
     document.getElementById("weather").textContent=`🎀 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
-  } catch { document.getElementById("weather").textContent="날씨를 가져올 수 없어요 🎀"; }
+  } catch { document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
 
