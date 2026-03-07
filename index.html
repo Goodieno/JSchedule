@@ -6,68 +6,108 @@
 <title>Hello Kitty Teacher Timer</title>
 
 <style>
-/* ================= HELLO KITTY THEME ================= */
-body {
-  background: #ffe6f2; 
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-  color: #ff4d94;
-  text-align: center;
-  margin: 0;
-  padding: 20px;
-  overflow-x: hidden;
+/* ================= COUNTDOWN RING PULSE ================= */
+@keyframes ringPulseRed{
+0%{filter:drop-shadow(0 0 3px rgba(255,51,133,.6));}
+50%{filter:drop-shadow(0 0 18px rgba(255,51,133,1));}
+100%{filter:drop-shadow(0 0 3px rgba(255,51,133,.6));}
+}
+@keyframes ringPulseBlue{
+0%{filter:drop-shadow(0 0 3px rgba(0,191,255,.6));}
+50%{filter:drop-shadow(0 0 18px rgba(0,191,255,1));}
+100%{filter:drop-shadow(0 0 3px rgba(0,191,255,.6));}
+}
+@keyframes ringPulseGray{
+0%{filter:drop-shadow(0 0 3px rgba(255,179,217,.5));}
+50%{filter:drop-shadow(0 0 12px rgba(255,179,217,.9));}
+100%{filter:drop-shadow(0 0 3px rgba(255,179,217,.5));}
+}
+.pulseClass{animation:ringPulseRed 2s infinite ease-in-out;}
+.pulseBreak{animation:ringPulseBlue 2s infinite ease-in-out;}
+.pulseLunch{animation:ringPulseRed 2s infinite ease-in-out;}
+.pulseFree{animation:ringPulseGray 2s infinite ease-in-out;}
+
+/* ================= CURRENT CLASS HIGHLIGHT ================= */
+.currentClass{
+background:#fff0f5;
+box-shadow:0 0 15px rgba(255,51,133,0.4);
+font-weight:bold;
+transition:all .3s ease;
 }
 
-h2 { margin: 10px 0; cursor: pointer; color: #ff1a75; text-shadow: 1px 1px white; font-size: 28px; }
-
-#clockBox { margin: auto; width: 320px; }
-canvas { background: white; border-radius: 50%; box-shadow: 0 0 25px #ffb3d9; border: 8px solid #ffb3d9; }
-
-#periodLabel { font-size: 24px; font-weight: bold; margin-top: 15px; color: #ff3385; }
-
-#info { 
-  margin-top: 20px; 
-  font-size: 18px; 
-  color: #ff66a3; 
-  background: white; 
-  border-radius: 15px; 
-  padding: 10px; 
-  display: inline-block; 
-  box-shadow: 0 4px 6px rgba(255, 179, 217, 0.3); 
+.periodTime {
+  font-size: 10px;
+  color: #ff99cc;
+  margin-right: 5px;
+  display: none;
 }
-#weather, #air { font-weight: bold; margin-top: 5px; }
 
-table { 
-  margin: auto; 
-  margin-top: 20px; 
-  border-collapse: collapse; 
-  width: 95%; 
-  max-width: 400px; 
-  background: white; 
-  border-radius: 20px; 
-  overflow: hidden; 
-  box-shadow: 0 6px 15px rgba(255, 179, 217, 0.5); 
+#scheduleTable td:hover .periodTime,
+#scheduleTable td:active .periodTime {
+  display: inline;
 }
-th, td { padding: 12px; border-bottom: 1px solid #ffe6f2; }
-th { background: #ffb3d9; color: white; font-size: 18px; }
-td { color: #ff4d94; font-size: 18px; font-weight: bold; }
-
-.currentClass { background: #fff0f5; box-shadow: inset 0 0 15px rgba(255, 51, 133, 0.2); color: #ff0066; }
 
 /* ================= EMOJI RAIN ================= */
-.falling-emoji { position: fixed; top: -50px; z-index: 9999; pointer-events: none; font-size: 26px; animation: fall linear forwards; }
-@keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+.falling-emoji {
+  position: fixed;
+  top: -50px;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 24px;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  to { transform: translateY(110vh) rotate(360deg); }
+}
+
+/* ================= THEME ================= */
+body{
+background:#ffe6f2; /* Kitty Pink */
+font-family:'Malgun Gothic', Arial;
+color:#ff4d94;
+text-align:center;
+margin:0;
+padding:20px;
+overflow-x: hidden;
+}
+h2{margin:10px 0;cursor:pointer; color:#ff1a75;}
+#clockBox{margin:auto;width:320px;}
+canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9;}
+#periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
+#info{margin-top:20px; font-size:18px;}
+#weather,#air{font-weight:bold;margin-top:5px; color:#ff66a3;}
+table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:400px; background:white; border-radius:15px; overflow:hidden;}
+th,td{padding:10px;border-bottom:1px solid #ffe6f2;}
+th{color:white; background:#ffb3d9;}
+.activeRowClass{background:rgba(255,0,102,.15);}
+.activeRowLunch{background:rgba(255,102,178,.25);}
+.lunchText{color:#ff3399;font-weight:bold;}
 
 /* WEEK POPUP */
-#weekPopup { 
-  position: fixed; 
-  top: 0; left: 0; width: 100%; height: 100%; 
-  background: rgba(255, 230, 242, 0.95); 
-  display: none; align-items: center; justify-content: center; z-index: 1000; 
+#weekPopup {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255, 230, 242, 0.9);
+  display: none; align-items: center; justify-content: center; z-index: 1000;
 }
-#weekBox { background: white; padding: 25px; border-radius: 30px; width: 90%; max-width: 550px; border: 4px solid #ffb3d9; }
-#weekTable { width: 100%; border-collapse: collapse; }
-#weekTable th { background: #ffcce6; color: #ff3385; font-size: 14px; }
-#weekTable td { border-top: 1px solid #ffcce6; font-size: 14px; padding: 8px; color: #666; }
+
+#weekBox {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 600px;
+  color: #ff4d94;
+  border: 4px solid #ffb3d9;
+}
+
+#weekBox h3 { margin-top: 0; text-align: center; color: #ff1a75; }
+#weekTable { width: 100%; border-collapse: collapse; text-align: center; }
+#weekTable th { background: #ffcce6; color: #ff3385; padding: 8px; }
+#weekTable td { padding: 10px; border-top: 1px solid #ffe6f2; color: #ff4d94; font-size: 13px; }
+
+.lunchRed { color: #ff6b6b; font-size: 11px; font-weight: bold; }
 </style>
 </head>
 
@@ -79,11 +119,11 @@ td { color: #ff4d94; font-size: 18px; font-weight: bold; }
 <canvas id="clock" width="300" height="300"></canvas>
 </div>
 
-<div id="periodLabel">수업 정보를 불러오는 중...</div>
+<div id="periodLabel"></div>
 
 <div id="info">
-<div id="weather">🎀 날씨 확인 중...</div>
-<div id="air">🌸 미세먼지 확인 중...</div>
+<div id="weather">🎀 날씨 불러오는 중...</div>
+<div id="air">🌸 미세먼지 불러오는 중...</div>
 </div>
 
 <table id="scheduleTable">
@@ -92,17 +132,31 @@ td { color: #ff4d94; font-size: 18px; font-weight: bold; }
 
 <div id="weekPopup">
 <div id="weekBox">
-<h3 style="color:#ff1a75">🎀 5학년 주간 시간표 🎀</h3>
+<h3>🎀 5학년 주간 시간표 🎀</h3>
 <table id="weekTable">
-<tr><th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
-<tr><td>1</td><td>수학</td><td>수학</td><td>국어</td><td>영어</td><td>국어</td></tr>
-<tr><td>2</td><td>국어</td><td>체육</td><td>수학</td><td>국어</td><td>체육</td></tr>
-<tr><td>3</td><td>영어</td><td>국어</td><td>사회</td><td>수학</td><td>사회</td></tr>
-<tr><td>4</td><td>과학</td><td>사회</td><td>실과</td><td>과학</td><td>과학</td></tr>
-<tr><td>5</td><td>음악</td><td>미술</td><td>영어</td><td>실과</td><td>도덕</td></tr>
-<tr><td>6</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td></tr>
+<tr>
+  <th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th>
+</tr>
+<tr>
+  <td>1</td><td>수학</td><td>수학</td><td>국어</td><td>영어</td><td>국어</td>
+</tr>
+<tr>
+  <td>2</td><td>국어</td><td>체육</td><td>수학</td><td>국어</td><td>체육</td>
+</tr>
+<tr>
+  <td>3</td><td>영어</td><td>국어</td><td>사회</td><td>수학</td><td>사회</td>
+</tr>
+<tr>
+  <td>4</td><td>과학</td><td>사회</td><td>실과</td><td>과학</td><td>과학</td>
+</tr>
+<tr>
+  <td>5</td><td>음악</td><td>미술</td><td>영어</td><td>실과</td><td>도덕</td>
+</tr>
+<tr>
+  <td>6</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td>
+</tr>
 </table>
-<p style="font-size: 12px; color: #ff99cc; margin-top: 10px;">* 닫으려면 화면을 클릭하세요 *</p>
+<p style="font-size:11px; color:#ff99cc; margin-top:10px;">* 닫으려면 화면을 클릭하세요 *</p>
 </div>
 </div>
 
@@ -124,11 +178,9 @@ const dayNames = {
 
 const now = new Date();
 const todayEn = now.toLocaleDateString('en-US', { weekday: 'long' });
-document.getElementById("today").textContent = `🎀 ${dayNames[todayEn]} 🎀`;
+document.getElementById("today").textContent = `🎀 ${dayNames[todayEn] || todayEn} 🎀`;
 
 const table = document.getElementById("scheduleTable");
-
-// Lunch 12:00-13:00 for the whole week
 const standardDay = [
     { type: "class", label: "1교시", start: "09:00", end: "09:40" },
     { type: "break", start: "09:40", end: "09:50" },
@@ -143,112 +195,99 @@ const standardDay = [
 ];
 
 const dailyBlocks = {
-  Monday: standardDay,
-  Tuesday: standardDay,
-  Wednesday: standardDay.slice(0, 7), 
-  Thursday: standardDay,
-  Friday: standardDay
+  Monday: standardDay, Tuesday: standardDay, Wednesday: standardDay.slice(0, 7), Thursday: standardDay, Friday: standardDay
 };
 
 const blocks = dailyBlocks[todayEn];
 
 if (!blocks) {
-  table.innerHTML = "<tr><td colspan='2' style='font-size:24px; padding: 40px;'>🎀 즐거운 주말 🎀</td></tr>";
+  table.innerHTML = "<tr><td colspan='2' style='font-size:22px; padding:30px;'>🎀 즐거운 주말 🎀</td></tr>";
 } else {
   let classIndex = 0;
   blocks.forEach((b) => {
     if (b.type === "break") return;
     let row = document.createElement("tr");
     row.dataset.start = b.start; row.dataset.end = b.end;
-    let p = document.createElement("td"); p.textContent = b.label;
+    let p = document.createElement("td");
+    let timeSpan = document.createElement("span");
+    timeSpan.className = "periodTime"; timeSpan.textContent = `${b.start}-${b.end}`;
+    p.appendChild(timeSpan); p.appendChild(document.createTextNode(b.label));
     let c = document.createElement("td");
     if (b.type === "class") {
         c.textContent = (schedule[todayEn] || [])[classIndex] || "-";
         classIndex++;
-    } else {
-        c.innerHTML = '<span style="color: #ff3399;">맛있는 점심 🍱</span>';
     }
+    if (b.type === "lunch") { c.innerHTML = '<span class="lunchText">맛있는 점심 🍱</span>'; }
     row.appendChild(p); row.appendChild(c);
     table.appendChild(row);
   });
 }
 
 function updateCurrentClass(){
-  const n = new Date();
-  const minutesNow = n.getHours()*60 + n.getMinutes();
-  document.querySelectorAll("#scheduleTable tr").forEach(row => {
-    const start = row.dataset.start; const end = row.dataset.end;
-    if(!start) return;
-    const [sh,sm] = start.split(":").map(Number); const [eh,em] = end.split(":").map(Number);
-    row.classList.toggle("currentClass", minutesNow >= (sh*60+sm) && minutesNow < (eh*60+em));
-  });
+const now=new Date(); const minutesNow=now.getHours()*60+now.getMinutes();
+document.querySelectorAll("#scheduleTable tr").forEach(row=>{
+const start=row.dataset.start; const end=row.dataset.end; if(!start||!end) return;
+const [sh,sm]=start.split(":").map(Number); const [eh,em]=end.split(":").map(Number);
+row.classList.toggle("currentClass", minutesNow >= (sh*60+sm) && minutesNow < (eh*60+em));
+});
 }
-setInterval(updateCurrentClass, 10000); updateCurrentClass();
+setInterval(updateCurrentClass,10000); updateCurrentClass();
 
-/* ================= CLOCK DRAWING ================= */
-const canvas = document.getElementById("clock");
-const ctx = canvas.getContext("2d");
-function toMin(t){ let [h,m] = t.split(":"); return h*60+m; }
+const canvas=document.getElementById("clock");
+const ctx=canvas.getContext("2d");
+function toMin(t){let[h,m]=t.split(":"); return h*60+m;}
 
 function drawClock(){
     let now = new Date();
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
 
-    // Face
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
 
-    // DARK PINK TICKS
-    for(let i=0; i<60; i++){
-        let angle = i * Math.PI/30;
-        let len = i % 5 === 0 ? 15 : 7;
-        let x1 = 150 + Math.cos(angle) * (125 - len);
-        let y1 = 150 + Math.sin(angle) * (125 - len);
-        let x2 = 150 + Math.cos(angle) * 125;
-        let y2 = 150 + Math.sin(angle) * 125;
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-        ctx.strokeStyle = "#ff80bf"; // Readable Darker Pink
-        ctx.lineWidth = i % 5 === 0 ? 3 : 1;
-        ctx.stroke();
+    /* DARK PINK TICKS */
+    for(let i=0;i<60;i++){
+        let angle=i*Math.PI/30; let len=i%5==0?15:7;
+        let x1=150+Math.cos(angle)*(113-len); let y1=150+Math.sin(angle)*(113-len);
+        let x2=150+Math.cos(angle)*113; let y2=150+Math.sin(angle)*113;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+        ctx.strokeStyle="#ff80bf"; ctx.lineWidth=i%5==0?3:1; ctx.stroke();
     }
-
+  
     let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
-    let label = "자유 시간 🎀"; let color = "#ffb3d9";
-    let total = 0; let remain = 0;
+    let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
 
     if(active){
-        label = active.label; color = "#ff1a75";
+        label = active.label;
+        color = active.type==="break" ? "#00bfff" : "#ff1a75";
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else if (blocks) {
-        let next = blocks.find(b => mins < toMin(b.start));
-        if(next) { label = `다음: ${next.label}`; total = toMin(next.start) - mins; remain = total; }
-    } else { label = "주말은 쉬는 날! 🎀"; total = 0; }
-
-    // FIXED COUNTDOWN ARC
-    if(total > 0){
-        let percent = remain / total;
-        let startAngle = -Math.PI / 2; // Top (12 o'clock)
-        let endAngle = startAngle + (percent * 2 * Math.PI);
-        ctx.beginPath(); 
-        ctx.arc(150, 150, 133, startAngle, endAngle);
-        ctx.lineWidth = 10; 
-        ctx.strokeStyle = color; 
-        ctx.stroke();
+        let nextBlock = blocks.find(b => mins < toMin(b.start));
+        if(nextBlock){ label = `다음 수업 → ${nextBlock.label}`; total = toMin(nextBlock.start) - mins; remain = total; }
+    } else {
+        color = "#ff66a3"; label = "🎀 주말 최고 🎀";
+        let friday = new Date(now); let day = friday.getDay(); 
+        let diffToFri = (day >= 5) ? (day - 5) : (day + 2);
+        friday.setDate(now.getDate() - diffToFri); friday.setHours(16, 30, 0, 0);
+        let monday = new Date(friday); monday.setDate(friday.getDate() + 3); monday.setHours(8, 30, 0, 0);
+        total = monday.getTime() - friday.getTime(); remain = monday.getTime() - now.getTime();
     }
 
-    let h = now.getHours();
-    let m = now.getMinutes().toString().padStart(2,"0");
-    let s = now.getSeconds().toString().padStart(2,"0");
-    let ampm = h >= 12 ? "오후" : "오전";
-    h = h % 12 || 12;
-    ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center";
+    if(total > 0){
+        let percent = remain / total;
+        ctx.beginPath(); ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
+        ctx.lineWidth = 6 + Math.sin(Date.now()/200)*2; ctx.strokeStyle = color; ctx.stroke();
+    }
+
+    let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
+    let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
+    ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
     ctx.fillText(`${ampm} ${h}:${m}:${s}`, 150, 150);
     document.getElementById("periodLabel").textContent = label;
+    document.getElementById("periodLabel").style.color = color;
 }
 setInterval(drawClock, 100);
 
-/* ================= EMOJI RAIN ================= */
 function startEmojiRain() {
   setInterval(() => {
     if (!blocks) {
@@ -277,8 +316,19 @@ async function loadWeather(){
 }
 loadWeather();
 
-document.getElementById("today").onclick=()=>{ document.getElementById("weekPopup").style.display="flex"; }
-document.getElementById("weekPopup").onclick=()=>{ document.getElementById("weekPopup").style.display="none"; }
+async function loadAir(){
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=36.89&lon=126.63&appid=${API_KEY}`);
+    const data = await res.json(); const aqi=data.list[0].main.aqi;
+    const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
+    document.getElementById("air").textContent=`🌸 미세먼지: ${levels[aqi-1]}`;
+  } catch { document.getElementById("air").textContent="미세먼지 확인 불가 🌸"; }
+}
+loadAir();
+
+const weekPopup=document.getElementById("weekPopup");
+document.getElementById("today").onclick=()=>{ weekPopup.style.display="flex"; }
+weekPopup.onclick=()=>{ weekPopup.style.display="none"; }
 </script>
 </body>
 </html>
