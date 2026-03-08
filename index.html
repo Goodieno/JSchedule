@@ -266,7 +266,7 @@ function drawClock(){
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
         ctx.save();
         ctx.beginPath(); 
-        ctx.arc(150,150,130,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
+        ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
         ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
         ctx.restore();
