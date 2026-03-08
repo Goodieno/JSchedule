@@ -30,7 +30,7 @@ padding:20px;
 overflow-x: hidden;
 }
 h2{margin:10px 0;cursor:pointer; color:#ff1a75;}
-#clockBox{margin:auto;width:320px;}
+#clockBox{margin:auto;width:320px; height:320px; display:flex; align-items:center; justify-content:center;}
 canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9;}
 #periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
 #info{margin-top:20px; font-size:18px;}
@@ -80,7 +80,7 @@ th{color:white; background:#ffb3d9;}
 <div id="periodLabel"></div>
 
 <div id="info">
-<div id="weather">🌥 날씨 불러오는 중...</div>
+<div id="weather">🌤 날씨 불러오는 중...</div>
 <div id="air">😷 미세먼지 불러오는 중...</div>
 </div>
 
@@ -105,6 +105,7 @@ th{color:white; background:#ffb3d9;}
 
 <script>
 const API_KEY="fa9fe37b9be14839fe6774643939e974";
+let currentCondition = "default"; 
 
 const schedule = {
   Monday: ["수학", "국어", "영어", "과학", "음악", "창체"],
@@ -205,7 +206,6 @@ function drawClock(){
         let angle=i*Math.PI/30; 
         let isMajor = i % 5 === 0;
         let len = isMajor ? 14 : 6;
-        // Ticks are set at radius 125
         let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
         let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
         
@@ -241,7 +241,7 @@ function drawClock(){
         remain = (mon.getTime() - now.getTime()) / (1000 * 60);
     }
 
-    // 3. High-Definition Pulsing Ring (Moved slightly outward to 140)
+    // 3. High-Definition Pulsing Ring (Moved outward for breathing room)
     if(total > 0 && remain > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
@@ -249,7 +249,6 @@ function drawClock(){
 
         ctx.save();
         ctx.beginPath(); 
-        // Radius changed from 133 to 140 to separate it from the ticks
         ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
         ctx.lineWidth = 10; 
         ctx.strokeStyle = color;
@@ -275,15 +274,28 @@ function drawClock(){
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 }
-
-
 setInterval(drawClock, 50); 
 
 function startEmojiRain() {
   setInterval(() => {
     const cur = new Date();
     const isPooTime = (cur.getDay() === 0 && cur.getHours() >= 21);
-    const emojis = isPooTime ? ['💩', '😭'] : ['🐱', '🎀', '🌸', '💖', '✨'];
+    
+    let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; // Default
+
+    if (isPooTime) {
+        emojis = ['💩', '😭'];
+    } else {
+        if (currentCondition === "Rain" || currentCondition === "Drizzle") {
+            emojis = ['☔', '💧', '☁️', '🐸'];
+        } else if (currentCondition === "Snow") {
+            emojis = ['❄️', '⛄', '🤍', '🌬️'];
+        } else if (currentCondition === "Clear") {
+            emojis = ['☀️', '🌻', '😎', '✨'];
+        } else if (currentCondition === "Clouds") {
+            emojis = ['☁️', '☁️', '🌥️', '🎈'];
+        }
+    }
     
     const e = document.createElement('div');
     e.className = 'falling-emoji';
@@ -298,25 +310,38 @@ startEmojiRain();
 
 async function loadWeather(){
 try{
-const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
-const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
-const data=await res.json();
-const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
-document.getElementById("weather").textContent=`\u2601\ufe0f 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
+    const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
+    const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+    const data=await res.json();
+    
+    currentCondition = data.weather[0].main; 
+
+    const weatherDetails = {
+        "Clear": { emoji: "☀️", text: "맑음" },
+        "Clouds": { emoji: "☁️", text: "흐림" },
+        "Rain": { emoji: "🌧️", text: "비" },
+        "Drizzle": { emoji: "🌦️", text: "이슬비" },
+        "Thunderstorm": { emoji: "⛈️", text: "천둥번개" },
+        "Snow": { emoji: "❄️", text: "눈" },
+        "Mist": { emoji: "🌫️", text: "안개" }
+    };
+
+    const current = weatherDetails[data.weather[0].main] || { emoji: "✨", text: data.weather[0].main };
+    document.getElementById("weather").textContent=`${current.emoji} 날씨: ${current.text} / ${data.main.temp.toFixed(1)}°C`;
 }catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
 
 async function loadAir(){
 try{
-const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
-const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
-const data=await res.json();
-const levels=["좋음 \ud83d\ude0a","보통 \ud83d\ude42","그저그럼 \ud83d\ude10","나쁨 \ud83d\ude37","매우나쁨 \u2620\ufe0f"];
-document.getElementById("air").textContent=`\ud83d\ude37 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
-}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 \ud83d\ude37"; }
+    const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
+    const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+    const data=await res.json();
+    const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
+    document.getElementById("air").textContent=`😷 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
 }
 loadAir();
 
