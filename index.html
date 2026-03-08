@@ -80,8 +80,8 @@ th{color:white; background:#ffb3d9;}
 <div id="periodLabel"></div>
 
 <div id="info">
-<div id="weather">🌤 날씨 불러오는 중...</div>
-<div id="air">😷 미세먼지 불러오는 중...</div>
+<div id="weather">날씨 불러오는 중...</div>
+<div id="air">미세먼지 불러오는 중...</div>
 </div>
 
 <table id="scheduleTable">
@@ -316,7 +316,7 @@ try{
     const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}`);
     const data=await res.json();
     const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-    document.getElementById("air").textContent=`미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+    document.getElementById("air").textContent=`😷미세먼지: ${levels[data.list[0].main.aqi-1]}`;
 }catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
 }
 loadAir();
