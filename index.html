@@ -182,6 +182,7 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
+    // Background and Ticks
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
     bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
@@ -200,13 +201,17 @@ function drawClock(){
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
     const schoolStart = toMin("09:00");
+    const isWednesday = (todayEn === "Wednesday");
+    const workEnd = isWednesday ? toMin("13:50") : toMin("14:40");
 
     if (isWorkday && mins < schoolStart) {
+        // COUNTDOWN TO START (Grey)
         label = "수업 준비 중 ☕";
         color = "#cccccc";
         total = schoolStart; 
         remain = schoolStart - mins;
-    } else if (isWorkday && active) {
+    } else if (isWorkday && mins <= workEnd && active) {
+        // SCHEDULED BLOCKS
         label = active.label;
         if(active.type === "class") color = "#ff1a75"; 
         else if(active.type === "break") color = "#00bfff"; 
@@ -215,9 +220,12 @@ function drawClock(){
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else {
+        // AFTER WORK / WEEKEND (Grey)
         label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
-        total = 1; remain = 1;
+        // Visual 60min loop for general free time
+        total = 60; 
+        remain = 60 - (now.getMinutes() + now.getSeconds()/60);
     }
 
     if(total > 0){
