@@ -197,7 +197,8 @@ function drawClock(){
     let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
     let label = "자유 시간 🎀"; 
     let color = "#cccccc"; 
-    let total = 1; let remain = 1; 
+    let total = 60; 
+    let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60)); 
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
     const schoolStart = toMin("09:00");
@@ -205,13 +206,10 @@ function drawClock(){
     const workEnd = isWednesday ? toMin("13:50") : toMin("14:40");
 
     if (isWorkday && mins < schoolStart) {
-        // COUNTDOWN TO START (Grey)
         label = "수업 준비 중 ☕";
         color = "#cccccc";
-        total = schoolStart; 
-        remain = schoolStart - mins;
-    } else if (isWorkday && mins <= workEnd && active) {
-        // SCHEDULED BLOCKS
+        // Shows the minutes remaining in the current hour
+    } else if (isWorkday && mins < workEnd && active) {
         label = active.label;
         if(active.type === "class") color = "#ff1a75"; 
         else if(active.type === "break") color = "#00bfff"; 
@@ -220,12 +218,8 @@ function drawClock(){
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else {
-        // AFTER WORK / WEEKEND (Grey)
         label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
-        // Visual 60min loop for general free time
-        total = 60; 
-        remain = 60 - (now.getMinutes() + now.getSeconds()/60);
     }
 
     if(total > 0){
