@@ -259,7 +259,7 @@ const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0
 const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
 const data=await res.json();
 const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
-document.getElementById("weather").textContent=`🎀 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
+document.getElementById("weather").textContent=`🌥 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
 }catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
@@ -271,8 +271,8 @@ const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0
 const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
 const data=await res.json();
 const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-document.getElementById("air").textContent=`🌸 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
-}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 🌸"; }
+document.getElementById("air").textContent=`😷 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
 }
 loadAir();
 
