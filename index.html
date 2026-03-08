@@ -197,35 +197,64 @@ function drawClock(){
     const isWednesday = (todayEn === "Wednesday");
     const schoolStart = toMin("09:00");
     const workEnd = isWednesday ? toMin("13:50") : toMin("14:40");
-
-    let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
-    
-    if (isWednesday && mins >= workEnd) {
-        active = null;
-    }
+    const weekendStartMin = toMin("16:30"); // Friday 4:30 PM
 
     let label = "자유 시간 🎀"; 
     let color = "#cccccc"; 
     let total = 60; 
-    let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60)); 
+    let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
 
-    const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
-
-    if (isWorkday && mins < schoolStart) {
-        label = "수업 준비 중 ☕";
-        color = "#cccccc";
-        total = schoolStart; // 540 minutes total (Midnight to 9 AM)
+    // Priority 1: MONDAY MORNING GAP (00:00 - 09:00)
+    if (todayEn === "Monday" && mins < schoolStart) {
+        label = "월요일 아침 ☕";
+        color = "#ff99cc";
+        total = schoolStart; 
         remain = schoolStart - mins;
-    } else if (isWorkday && mins < workEnd && active) {
-        label = active.label;
-        if(active.type === "class") color = "#ff1a75"; 
-        else if(active.type === "break") color = "#00bfff"; 
-        else if(active.type === "lunch") color = "#ffd700"; 
+    }
+    // Priority 2: WEEKEND (Friday 16:30 to Sunday 23:59)
+    else if ((todayEn === "Friday" && mins >= weekendStartMin) || todayEn === "Saturday" || todayEn === "Sunday") {
+        label = "🫶 즐거운 주말 🫶";
+        color = "#00d4ff";
         
-        total = toMin(active.end) - toMin(active.start);
-        remain = toMin(active.end) - mins;
-    } else {
-        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
+        let sunEnd = new Date(now);
+        let daysToSun = (7 - now.getDay()) % 7;
+        sunEnd.setDate(now.getDate() + daysToSun);
+        sunEnd.setHours(23, 59, 59, 999);
+
+        let friStart = new Date(now);
+        if (todayEn === "Friday") friStart.setHours(16,30,0,0);
+        else if (todayEn === "Saturday") { friStart.setDate(now.getDate()-1); friStart.setHours(16,30,0,0); }
+        else { friStart.setDate(now.getDate()-2); friStart.setHours(16,30,0,0); }
+
+        total = (sunEnd - friStart) / (1000 * 60);
+        remain = (sunEnd - now) / (1000 * 60);
+    }
+    // Priority 3: SCHOOL TIME BLOCKS
+    else if (mins >= schoolStart && mins < workEnd) {
+        let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
+        if (active) {
+            label = active.label;
+            if(active.type === "class") color = "#ff1a75"; 
+            else if(active.type === "break") color = "#00bfff"; 
+            else if(active.type === "lunch") color = "#ffd700"; 
+            total = toMin(active.end) - toMin(active.start);
+            remain = toMin(active.end) - mins;
+        } else {
+            // Class Gaps
+            let nextBlock = blocks.find(b => mins < toMin(b.start));
+            if (nextBlock) {
+                label = "대기 중... ⌛";
+                color = "#ff99cc";
+                let lastBlock = [...blocks].reverse().find(b => mins >= toMin(b.end));
+                let startOfGap = lastBlock ? toMin(lastBlock.end) : schoolStart;
+                total = toMin(nextBlock.start) - startOfGap;
+                remain = toMin(nextBlock.start) - mins;
+            }
+        }
+    }
+    // Priority 4: WEEKDAY FREE TIME
+    else {
+        label = "자유 시간 🙏";
         color = "#cccccc";
         total = 60;
         remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
@@ -237,7 +266,6 @@ function drawClock(){
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
         ctx.save();
         ctx.beginPath(); 
-        // Radius set to 130 to prevent edge clipping
         ctx.arc(150,150,130,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
         ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
@@ -276,7 +304,7 @@ function startEmojiRain() {
     const cur = new Date(); const day = cur.getDay(); const hr = cur.getHours();
     const minsNow = hr * 60 + cur.getMinutes(); const workEndMins = 16 * 60 + 30; 
     let mode = "OFF";
-    if (day === 5 && minsNow >= workEndMins) mode = "WEEKEND";
+    if (day === 5 && minsNow >= (16*60+30)) mode = "WEEKEND";
     else if (day === 6) mode = "WEEKEND";
     else if (day === 0) mode = (hr >= 21) ? "POO" : "WEEKEND";
     if (mode === "OFF") return;
