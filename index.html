@@ -205,6 +205,7 @@ function drawClock(){
         let angle=i*Math.PI/30; 
         let isMajor = i % 5 === 0;
         let len = isMajor ? 14 : 6;
+        // Ticks are set at radius 125
         let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
         let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
         
@@ -240,7 +241,7 @@ function drawClock(){
         remain = (mon.getTime() - now.getTime()) / (1000 * 60);
     }
 
-    // 3. High-Definition Pulsing Ring
+    // 3. High-Definition Pulsing Ring (Moved slightly outward to 140)
     if(total > 0 && remain > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
@@ -248,7 +249,8 @@ function drawClock(){
 
         ctx.save();
         ctx.beginPath(); 
-        ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
+        // Radius changed from 133 to 140 to separate it from the ticks
+        ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
         ctx.lineWidth = 10; 
         ctx.strokeStyle = color;
         ctx.lineCap = "round";
@@ -273,6 +275,7 @@ function drawClock(){
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 }
+
 
 setInterval(drawClock, 50); 
 
