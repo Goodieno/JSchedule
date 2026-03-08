@@ -197,43 +197,18 @@ function drawClock(){
         ctx.strokeStyle="#ff80bf"; ctx.lineWidth=i%5==0?3:1; ctx.stroke();
     }
   
-    let active = blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end));
+    let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
     let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
-    const workStart = toMin("08:30");
     const workEnd = toMin("16:30");
 
-    if(isWorkday) {
-        if(active) {
-            label = active.label;
-            color = active.type==="break" ? "#00bfff" : "#ff1a75";
-            if (active.type === "class") {
-                let classIdx = blocks.filter((b, i) => b.type === "class" && blocks.indexOf(b) < blocks.indexOf(active)).length;
-                let subject = (schedule[todayEn] || [])[classIdx];
-                const preps = ["영어", "체육", "도덕"];
-                if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) color = "#20b2aa";
-            }
-            total = toMin(active.end) - toMin(active.start);
-            remain = toMin(active.end) - mins;
-        } else if (mins < workEnd) {
-            let nextBlock = blocks.find(b => mins < toMin(b.start));
-            if(nextBlock){ 
-                label = (mins >= workStart) ? `수업 준비 시간 → ${nextBlock.label} ☕` : `자유 시간 🎀`;
-                color = (mins >= workStart) ? "#20b2aa" : "#ffb3d9";
-                total = toMin(nextBlock.start) - mins; remain = total; 
-            } else if (mins > toMin("14:40")) {
-                label = "퇴근까지 남은 시간 🏡";
-                color = "#20b2aa";
-                total = workEnd - toMin("14:40");
-                remain = workEnd - mins;
-            }
-        } else {
-            label = "자유 시간 🎀";
-        }
-    }
-
-    if (isWeekend || (isWorkday && mins >= workEnd)) {
+    if (isWorkday && active) {
+        label = active.label;
+        color = active.type==="break" ? "#00bfff" : "#ff1a75";
+        total = toMin(active.end) - toMin(active.start);
+        remain = toMin(active.end) - mins;
+    } else if (isWeekend || (isWorkday && mins >= workEnd)) {
         color = "#ff66a3";
         label = isWeekend ? "🎀 즐거운 주말 🎀" : "자유 시간 🎀";
         let mon = new Date(now);
@@ -248,7 +223,7 @@ function drawClock(){
     if(total > 0 && remain > 0){
         let percent = remain / total;
         ctx.beginPath(); ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
-        ctx.lineWidth = 6 + Math.sin(Date.now()/200)*2; ctx.strokeStyle = color; ctx.stroke();
+        ctx.lineWidth = 6; ctx.strokeStyle = color; ctx.stroke();
     }
 
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
@@ -262,13 +237,17 @@ setInterval(drawClock, 100);
 
 function startEmojiRain() {
   setInterval(() => {
-      const e = document.createElement('div');
-      e.className = 'falling-emoji';
-      e.textContent = ['🐱', '🎀', '🌸', '💖', '✨'][Math.floor(Math.random() * 5)];
-      e.style.left = Math.random() * 100 + 'vw';
-      e.style.animationDuration = (Math.random() * 3 + 2) + 's';
-      document.body.appendChild(e);
-      setTimeout(() => e.remove(), 5000);
+    const cur = new Date();
+    const isPooTime = (cur.getDay() === 0 && cur.getHours() >= 21);
+    const emojis = isPooTime ? ['💩'] : ['🐱', '🎀', '🌸', '💖', '✨'];
+    
+    const e = document.createElement('div');
+    e.className = 'falling-emoji';
+    e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    e.style.left = Math.random() * 100 + 'vw';
+    e.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    document.body.appendChild(e);
+    setTimeout(() => e.remove(), 5000);
   }, 350);
 }
 startEmojiRain();
@@ -290,9 +269,9 @@ try{
 const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
 const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
 const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
-const data=await res.json(); const aqi=data.list[0].main.aqi;
+const data=await res.json();
 const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-document.getElementById("air").textContent=`🌸 미세먼지: ${levels[aqi-1]}`;
+document.getElementById("air").textContent=`🌸 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
 }catch{ document.getElementById("air").textContent="미세먼지 확인 불가 🌸"; }
 }
 loadAir();
