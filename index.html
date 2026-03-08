@@ -138,38 +138,6 @@ const blocks = [
     { type: "class", label: "6교시", start: "14:00", end: "14:40" }
 ];
 
-const table = document.getElementById("scheduleTable");
-const isWeekend = (todayEn === "Saturday" || todayEn === "Sunday");
-
-if (isWeekend) {
-  table.innerHTML = "<tr><td colspan='2' style='font-size:22px; padding:30px;'>🎀 즐거운 주말 🎀</td></tr>";
-} else {
-  let classIndex = 0;
-  blocks.forEach((b) => {
-    if (b.type === "break") return;
-    let row = document.createElement("tr");
-    row.dataset.start = b.start; row.dataset.end = b.end;
-    let p = document.createElement("td");
-    let timeSpan = document.createElement("span");
-    timeSpan.className = "periodTime"; timeSpan.textContent = `${b.start}-${b.end}`;
-    p.appendChild(timeSpan); p.appendChild(document.createTextNode(b.label));
-    let c = document.createElement("td");
-    if (b.type === "class") {
-        let subject = (schedule[todayEn] || [])[classIndex] || "-";
-        c.textContent = subject;
-        const preps = ["영어", "체육", "도덕"];
-        if (preps.includes(subject) || (subject === "과학" && todayEn !== "Friday")) {
-            c.classList.add("prepPeriod");
-        }
-        classIndex++;
-    } else if (b.type === "lunch") {
-        c.innerHTML = '<span class="lunchText">맛있는 점심 🍱</span>';
-    }
-    row.appendChild(p); row.appendChild(c);
-    table.appendChild(row);
-  });
-}
-
 const canvas=document.getElementById("clock");
 const ctx=canvas.getContext("2d");
 function toMin(t){let[h,m]=t.split(":"); return h*60+m;}
@@ -182,18 +150,6 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // Face & Ticks
-    let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
-    bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
-    ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
-    for(let i=0;i<60;i++){
-        let angle=i*Math.PI/30; let isMajor = i % 5 === 0; let len = isMajor ? 14 : 6;
-        let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
-        let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-        ctx.strokeStyle = isMajor ? "#ff66a3" : "#ffb3d9"; ctx.lineWidth = isMajor ? 4 : 2; ctx.lineCap = "round"; ctx.stroke();
-    }
-  
     let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
     let label = "자유 시간 🎀"; 
     let color = "#cccccc"; 
@@ -208,10 +164,10 @@ function drawClock(){
     if (isWorkday && mins < schoolStart) {
         label = "수업 준비 중 ☕";
         color = "#cccccc";
-        // COUNTDOWN FROM MIDNIGHT TO 9:00 AM
-        total = schoolStart; // 540 minutes
+        total = schoolStart;
         remain = schoolStart - mins;
-    } else if (isWorkday && mins < workEnd && active) {
+    } 
+    else if (isWorkday && mins < workEnd && active) {
         label = active.label;
         if(active.type === "class") color = "#ff1a75"; 
         else if(active.type === "break") color = "#00bfff"; 
@@ -219,99 +175,31 @@ function drawClock(){
         
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
-    } else {
-        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
-        color = "#cccccc";
-        // Visual loop for evening/weekends
-        total = 60;
-        remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
     }
 
     if(total > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
-        ctx.save();
         ctx.beginPath(); 
         ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
         ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
-        ctx.restore();
     }
 
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
-    ctx.fillStyle="#ff80bf"; ctx.font="bold 14px Arial"; ctx.textAlign="center";
-    ctx.fillText(ampm, 150, 135);
-    ctx.fillStyle="#ff1a75"; ctx.font="bold 32px Arial"; ctx.textAlign="center";
-    ctx.fillText(`${h}:${m}:${s}`, 150, 165);
-    
+
+    ctx.fillStyle="#ff1a75";
+    ctx.font="bold 32px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(`${h}:${m}:${s}`,150,165);
+
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
-
-    document.querySelectorAll("#scheduleTable tr").forEach(row => {
-        const start = row.dataset.start; const end = row.dataset.end;
-        if (start && end) {
-            const [sh, sm] = start.split(":").map(Number);
-            const [eh, em] = end.split(":").map(Number);
-            const isCurrent = (mins >= (sh * 60 + sm) && mins < (eh * 60 + em));
-            row.classList.toggle("currentClass", isCurrent);
-        }
-    });
 }
-setInterval(drawClock, 50); 
 
-function startEmojiRain() {
-  setInterval(() => {
-    const cur = new Date(); const day = cur.getDay(); const hr = cur.getHours();
-    const minsNow = hr * 60 + cur.getMinutes(); const workEndMins = 16 * 60 + 30; 
-    let mode = "OFF";
-    if (day === 5 && minsNow >= workEndMins) mode = "WEEKEND";
-    else if (day === 6) mode = "WEEKEND";
-    else if (day === 0) mode = (hr >= 21) ? "POO" : "WEEKEND";
-    if (mode === "OFF") return;
-    let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; 
-    if (mode === "POO") emojis = ['💩', '😭'];
-    else {
-        if (currentCondition === "Rain" || currentCondition === "Drizzle") emojis = [...emojis, '☔', '💧', '☁️', '🐸'];
-        else if (currentCondition === "Snow") emojis = [...emojis, '❄️', '⛄', '🤍', '🌬️'];
-    }
-    const e = document.createElement('div'); e.className = 'falling-emoji';
-    e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    e.style.left = Math.random() * 100 + 'vw'; e.style.animationDuration = (Math.random() * 3 + 2) + 's';
-    document.body.appendChild(e); setTimeout(() => e.remove(), 5000);
-  }, 350);
-}
-startEmojiRain();
-
-async function loadWeather(){
-try{
-    const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-    const geoData=await geoRes.json();
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}&units=metric`);
-    const data=await res.json();
-    currentCondition = data.weather[0].main; 
-    const weatherDetails = {"Clear":"☀️ 맑음", "Clouds":"☁️ 흐림", "Rain":"🌧️ 비", "Snow":"❄️ 눈", "Drizzle":"🌦️ 이슬비", "Mist":"🌫️ 안개"};
-    document.getElementById("weather").textContent=`날씨: ${weatherDetails[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
-}catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
-}
-loadWeather();
-
-async function loadAir(){
-try{
-    const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-    const geoData=await geoRes.json();
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}`);
-    const data=await res.json();
-    const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-    document.getElementById("air").textContent=`미세먼지: ${levels[data.list[0].main.aqi-1]}`;
-}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
-}
-loadAir();
-
-const weekPopup=document.getElementById("weekPopup");
-document.getElementById("today").onclick=()=>{ weekPopup.style.display="flex"; }
-weekPopup.onclick=()=>{ weekPopup.style.display="none"; }
+setInterval(drawClock,50);
 </script>
 </body>
 </html>
