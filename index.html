@@ -170,16 +170,6 @@ if (isWeekend) {
   });
 }
 
-function updateCurrentClass(){
-  const now=new Date(); const minsNow=now.getHours()*60+now.getMinutes();
-  document.querySelectorAll("#scheduleTable tr").forEach(row=>{
-    const start=row.dataset.start; const end=row.dataset.end; if(!start) return;
-    const [sh,sm]=start.split(":").map(Number); const [eh,em]=end.split(":").map(Number);
-    row.classList.toggle("currentClass", minsNow >= (sh*60+sm) && minsNow < (eh*60+em));
-  });
-}
-setInterval(updateCurrentClass, 10000); updateCurrentClass();
-
 const canvas=document.getElementById("clock");
 const ctx=canvas.getContext("2d");
 function toMin(t){let[h,m]=t.split(":"); return h*60+m;}
@@ -192,7 +182,7 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // 1. Clock Face with subtle gradient
+    // 1. Clock Face
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
     bgGrad.addColorStop(0, "#ffffff");
     bgGrad.addColorStop(1, "#fff0f6"); 
@@ -201,30 +191,31 @@ function drawClock(){
     ctx.fillStyle=bgGrad; 
     ctx.fill();
 
-    // 2. Refined Tick Marks (Rounded)
+    // 2. Ticks
     for(let i=0;i<60;i++){
         let angle=i*Math.PI/30; 
         let isMajor = i % 5 === 0;
         let len = isMajor ? 14 : 6;
         let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
         let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
-        
-        ctx.beginPath(); 
-        ctx.moveTo(x1,y1); 
-        ctx.lineTo(x2,y2);
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
         ctx.strokeStyle = isMajor ? "#ff66a3" : "#ffb3d9"; 
-        ctx.lineWidth = isMajor ? 4 : 2; 
-        ctx.lineCap = "round"; 
-        ctx.stroke();
+        ctx.lineWidth = isMajor ? 4 : 2; ctx.lineCap = "round"; ctx.stroke();
     }
   
-    let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
+    let active = blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end));
     let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
     const workEnd = toMin("16:30");
 
-    if (isWorkday && active) {
+    // FUNCTION: Pre-school Countdown (00:00 to 09:00)
+    if (isWorkday && mins < toMin("09:00")) {
+        label = "곧 1교시 시작! 🎒";
+        color = "#ff80bf";
+        total = toMin("09:00");
+        remain = toMin("09:00") - mins;
+    } else if (isWorkday && active) {
         label = active.label;
         color = active.type==="break" ? "#00bfff" : "#ff1a75";
         total = toMin(active.end) - toMin(active.start);
@@ -241,62 +232,72 @@ function drawClock(){
         remain = (mon.getTime() - now.getTime()) / (1000 * 60);
     }
 
-    // 3. High-Definition Pulsing Ring (Moved outward for breathing room)
+    // 3. Pulsing Ring
     if(total > 0 && remain > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
-
         ctx.save();
         ctx.beginPath(); 
         ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
-        ctx.lineWidth = 10; 
-        ctx.strokeStyle = color;
-        ctx.lineCap = "round";
-        ctx.shadowBlur = pulseGlow;
-        ctx.shadowColor = color;
-        ctx.stroke();
+        ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
+        ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
         ctx.restore();
     }
 
-    // 4. Stylized Digital Clock
+    // 4. Digital Clock
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
-    
     ctx.fillStyle="#ff80bf"; ctx.font="bold 14px Arial"; ctx.textAlign="center";
     ctx.fillText(ampm, 150, 135);
-
     ctx.fillStyle="#ff1a75"; ctx.font="bold 32px Arial"; ctx.textAlign="center";
-    ctx.shadowBlur = 2; ctx.shadowColor = "rgba(255, 26, 117, 0.3)";
     ctx.fillText(`${h}:${m}:${s}`, 150, 165);
     
-    ctx.shadowBlur = 0;
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
+
+    // FUNCTION: Row Highlighting
+    document.querySelectorAll("#scheduleTable tr").forEach(row => {
+        const start = row.dataset.start; const end = row.dataset.end;
+        if (start && end) {
+            const [sh, sm] = start.split(":").map(Number);
+            const [eh, em] = end.split(":").map(Number);
+            const isCurrent = (mins >= (sh * 60 + sm) && mins < (eh * 60 + em));
+            row.classList.toggle("currentClass", isCurrent);
+        }
+    });
 }
 setInterval(drawClock, 50); 
 
 function startEmojiRain() {
   setInterval(() => {
     const cur = new Date();
-    const isPooTime = (cur.getDay() === 0 && cur.getHours() >= 21);
-    
-    let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; // Default
+    const day = cur.getDay(); 
+    const hr = cur.getHours();
+    const minsNow = hr * 60 + cur.getMinutes();
+    const workEndMins = 16 * 60 + 30; 
 
-    if (isPooTime) {
+    let mode = "OFF";
+
+    // Lockdown Logic: 00:00 Mon to 16:30 Fri is OFF.
+    if (day === 5 && minsNow >= workEndMins) {
+        mode = "WEEKEND";
+    } else if (day === 6) {
+        mode = "WEEKEND";
+    } else if (day === 0) {
+        mode = (hr >= 21) ? "POO" : "WEEKEND";
+    }
+
+    if (mode === "OFF") return;
+
+    let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; 
+    if (mode === "POO") {
         emojis = ['💩', '😭'];
     } else {
-        if (currentCondition === "Rain" || currentCondition === "Drizzle") {
-            emojis = ['☔', '💧', '☁️', '🐸'];
-        } else if (currentCondition === "Snow") {
-            emojis = ['❄️', '⛄', '🤍', '🌬️'];
-        } else if (currentCondition === "Clear") {
-            emojis = ['☀️', '🌻', '😎', '✨'];
-        } else if (currentCondition === "Clouds") {
-            emojis = ['☁️', '☁️', '🌥️', '🎈'];
-        }
+        if (currentCondition === "Rain" || currentCondition === "Drizzle") emojis = [...emojis, '☔', '💧', '☁️', '🐸'];
+        else if (currentCondition === "Snow") emojis = [...emojis, '❄️', '⛄', '🤍', '🌬️'];
     }
-    
+
     const e = document.createElement('div');
     e.className = 'falling-emoji';
     e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -311,24 +312,12 @@ startEmojiRain();
 async function loadWeather(){
 try{
     const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-    const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+    const geoData=await geoRes.json();
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}&units=metric`);
     const data=await res.json();
-    
     currentCondition = data.weather[0].main; 
-
-    const weatherDetails = {
-        "Clear": { emoji: "☀️", text: "맑음" },
-        "Clouds": { emoji: "☁️", text: "흐림" },
-        "Rain": { emoji: "🌧️", text: "비" },
-        "Drizzle": { emoji: "🌦️", text: "이슬비" },
-        "Thunderstorm": { emoji: "⛈️", text: "천둥번개" },
-        "Snow": { emoji: "❄️", text: "눈" },
-        "Mist": { emoji: "🌫️", text: "안개" }
-    };
-
-    const current = weatherDetails[data.weather[0].main] || { emoji: "✨", text: data.weather[0].main };
-    document.getElementById("weather").textContent=`${current.emoji} 날씨: ${current.text} / ${data.main.temp.toFixed(1)}°C`;
+    const weatherDetails = {"Clear":"☀️ 맑음", "Clouds":"☁️ 흐림", "Rain":"🌧️ 비", "Snow":"❄️ 눈", "Drizzle":"🌦️ 이슬비", "Mist":"🌫️ 안개"};
+    document.getElementById("weather").textContent=`날씨: ${weatherDetails[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
 }catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
@@ -336,11 +325,11 @@ loadWeather();
 async function loadAir(){
 try{
     const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangjin,KR&limit=1&appid=${API_KEY}`);
-    const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+    const geoData=await geoRes.json();
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}`);
     const data=await res.json();
     const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-    document.getElementById("air").textContent=`😷 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+    document.getElementById("air").textContent=`미세먼지: ${levels[data.list[0].main.aqi-1]}`;
 }catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
 }
 loadAir();
