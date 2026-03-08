@@ -215,7 +215,8 @@ function drawClock(){
     if (isWorkday && mins < schoolStart) {
         label = "수업 준비 중 ☕";
         color = "#cccccc";
-        total = schoolStart; // Countdown from 00:00 to 09:00 (540 mins)
+        // Fixed: Use 0 to 9:00 (540 mins) as the total range for a proper countdown
+        total = schoolStart; 
         remain = schoolStart - mins;
     } else if (isWorkday && mins < workEnd && active) {
         label = active.label;
@@ -228,7 +229,6 @@ function drawClock(){
     } else {
         label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
-        // Default 60min visual loop for free time
         total = 60;
         remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
     }
@@ -262,7 +262,6 @@ function drawClock(){
             const [eh, em] = end.split(":").map(Number);
             const isCurrent = (mins >= (sh * 60 + sm) && mins < (eh * 60 + em));
             
-            // On Wednesdays, don't highlight anything after period 5
             if (isWednesday && toMin(start) >= toMin("13:50")) {
                 row.classList.remove("currentClass");
             } else {
