@@ -191,16 +191,30 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // Background Circle
-    ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
+    // 1. Clock Face with subtle gradient
+    let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
+    bgGrad.addColorStop(0, "#ffffff");
+    bgGrad.addColorStop(1, "#fff0f6"); 
+    ctx.beginPath(); 
+    ctx.arc(150,150,133,0,Math.PI*2); 
+    ctx.fillStyle=bgGrad; 
+    ctx.fill();
 
-    // Clock Marks
+    // 2. Refined Tick Marks (Rounded)
     for(let i=0;i<60;i++){
-        let angle=i*Math.PI/30; let len=i%5==0?15:7;
-        let x1=150+Math.cos(angle)*(113-len); let y1=150+Math.sin(angle)*(113-len);
-        let x2=150+Math.cos(angle)*113; let y2=150+Math.sin(angle)*113;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-        ctx.strokeStyle="#ff80bf"; ctx.lineWidth=i%5==0?3:1; ctx.stroke();
+        let angle=i*Math.PI/30; 
+        let isMajor = i % 5 === 0;
+        let len = isMajor ? 14 : 6;
+        let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
+        let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
+        
+        ctx.beginPath(); 
+        ctx.moveTo(x1,y1); 
+        ctx.lineTo(x2,y2);
+        ctx.strokeStyle = isMajor ? "#ff66a3" : "#ffb3d9"; 
+        ctx.lineWidth = isMajor ? 4 : 2; 
+        ctx.lineCap = "round"; 
+        ctx.stroke();
     }
   
     let active = blocks ? blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end)) : null;
@@ -226,37 +240,41 @@ function drawClock(){
         remain = (mon.getTime() - now.getTime()) / (1000 * 60);
     }
 
-    // PULSING COUNTDOWN RING
+    // 3. High-Definition Pulsing Ring
     if(total > 0 && remain > 0){
         let percent = remain / total;
-        
-        // Pulse logic update
         pulseGlow += 0.4 * pulseDir;
-        if(pulseGlow > 12 || pulseGlow < 0) pulseDir *= -1;
+        if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
 
         ctx.save();
         ctx.beginPath(); 
         ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
-        ctx.lineWidth = 8;
+        ctx.lineWidth = 10; 
         ctx.strokeStyle = color;
-        
-        // Apply glow to the ring
+        ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow;
         ctx.shadowColor = color;
-        
         ctx.stroke();
         ctx.restore();
     }
 
-    // Digital Time
+    // 4. Stylized Digital Clock
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
-    ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText(`${h}:${m}:${s} ${ampm}`, 150, 150);
+    
+    ctx.fillStyle="#ff80bf"; ctx.font="bold 14px Arial"; ctx.textAlign="center";
+    ctx.fillText(ampm, 150, 135);
+
+    ctx.fillStyle="#ff1a75"; ctx.font="bold 32px Arial"; ctx.textAlign="center";
+    ctx.shadowBlur = 2; ctx.shadowColor = "rgba(255, 26, 117, 0.3)";
+    ctx.fillText(`${h}:${m}:${s}`, 150, 165);
+    
+    ctx.shadowBlur = 0;
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 }
-setInterval(drawClock, 50); // Faster refresh for smooth pulsing
+
+setInterval(drawClock, 50); 
 
 function startEmojiRain() {
   setInterval(() => {
@@ -282,7 +300,7 @@ const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0
 const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
 const data=await res.json();
 const weatherMap = {"Clouds":"흐림", "Clear":"맑음", "Rain":"비", "Snow":"눈", "Drizzle":"이슬비", "Thunderstorm":"천둥번개"};
-document.getElementById("weather").textContent=`🌥 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
+document.getElementById("weather").textContent=`\u2601\ufe0f 날씨: ${weatherMap[data.weather[0].main] || data.weather[0].main} / ${data.main.temp.toFixed(1)}°C`;
 }catch{ document.getElementById("weather").textContent="날씨 확인 불가 🎀"; }
 }
 loadWeather();
@@ -293,9 +311,9 @@ const geoRes=await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=Dangji
 const geoData=await geoRes.json(); const lat=geoData[0].lat; const lon=geoData[0].lon;
 const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
 const data=await res.json();
-const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-document.getElementById("air").textContent=`😷 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
-}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
+const levels=["좋음 \ud83d\ude0a","보통 \ud83d\ude42","그저그럼 \ud83d\ude10","나쁨 \ud83d\ude37","매우나쁨 \u2620\ufe0f"];
+document.getElementById("air").textContent=`\ud83d\ude37 미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+}catch{ document.getElementById("air").textContent="미세먼지 확인 불가 \ud83d\ude37"; }
 }
 loadAir();
 
