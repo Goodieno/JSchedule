@@ -182,7 +182,7 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // Background and Ticks
+    // Face & Ticks
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
     bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
@@ -208,7 +208,9 @@ function drawClock(){
     if (isWorkday && mins < schoolStart) {
         label = "수업 준비 중 ☕";
         color = "#cccccc";
-        // Shows the minutes remaining in the current hour
+        // COUNTDOWN FROM MIDNIGHT TO 9:00 AM
+        total = schoolStart; // 540 minutes
+        remain = schoolStart - mins;
     } else if (isWorkday && mins < workEnd && active) {
         label = active.label;
         if(active.type === "class") color = "#ff1a75"; 
@@ -220,6 +222,9 @@ function drawClock(){
     } else {
         label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
+        // Visual loop for evening/weekends
+        total = 60;
+        remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
     }
 
     if(total > 0){
