@@ -182,7 +182,6 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // Background and Ticks logic remains the same
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
     bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
@@ -196,44 +195,38 @@ function drawClock(){
   
     let active = blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end));
     let label = "자유 시간 🎀"; 
-    let color = "#cccccc"; // Default Free Time Grey
-    let total = 0; let remain = 0;
+    let color = "#cccccc"; 
+    let total = 1; let remain = 1; 
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
-    const workEnd = (todayEn === "Wednesday") ? toMin("13:50") : toMin("14:40");
+    const schoolStart = toMin("09:00");
 
-    // RING LOGIC OVERHAUL
-    if (isWorkday && active) {
+    if (isWorkday && mins < schoolStart) {
+        label = "수업 준비 중 ☕";
+        color = "#cccccc";
+        total = schoolStart; 
+        remain = schoolStart - mins;
+    } else if (isWorkday && active) {
         label = active.label;
-        if(active.type === "class") color = "#ff1a75"; // Red
-        else if(active.type === "break") color = "#00bfff"; // Blue
-        else if(active.type === "lunch") color = "#ffd700"; // Yellow
+        if(active.type === "class") color = "#ff1a75"; 
+        else if(active.type === "break") color = "#00bfff"; 
+        else if(active.type === "lunch") color = "#ffd700"; 
         
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
     } else {
-        // Free Time logic (Grey)
+        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
-        if (isWorkday && mins < toMin("09:00")) {
-            label = "수업 준비 중 ☕";
-            total = toMin("09:00");
-            remain = toMin("09:00") - mins;
-        } else {
-            label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
-            // For general free time, we pulse based on the hour for visual effect
-            total = 60;
-            remain = 60 - (now.getMinutes() + now.getSeconds()/60);
-        }
+        total = 1; remain = 1;
     }
 
-    // DRAW RING
-    if(total > 0 && remain > 0){
+    if(total > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
         ctx.save();
         ctx.beginPath(); 
-        ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
+        ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
         ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
         ctx.restore();
