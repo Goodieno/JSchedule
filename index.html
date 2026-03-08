@@ -40,7 +40,7 @@ table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:4
 th,td{padding:10px;border-bottom:1px solid #ffe6f2;}
 th{color:white; background:#ffb3d9;}
 
-.currentClass{ background:#fff0f5; box-shadow:0 0 15px rgba(255,51,133,0.4); font-weight:bold; }
+.currentClass{ background:#fff0f5 !important; box-shadow:0 0 15px rgba(255,51,133,0.4); font-weight:bold; }
 .prepPeriod { color: #20b2aa !important; } 
 .lunchText { color: #ff3399; font-weight: bold; }
 .periodTime { font-size: 10px; color: #ff99cc; margin-right: 5px; display: none; }
@@ -126,15 +126,15 @@ document.getElementById("today").textContent = `🎀 ${dayNames[todayEn] || toda
 
 const blocks = [
     { type: "class", label: "1교시", start: "09:00", end: "09:40" },
-    { type: "break", start: "09:40", end: "09:50" },
+    { type: "break", label: "쉬는 시간", start: "09:40", end: "09:50" },
     { type: "class", label: "2교시", start: "09:50", end: "10:30" },
-    { type: "break", start: "10:30", end: "10:40" },
+    { type: "break", label: "쉬는 시간", start: "10:30", end: "10:40" },
     { type: "class", label: "3교시", start: "10:40", end: "11:20" },
-    { type: "break", start: "11:20", end: "11:30" },
+    { type: "break", label: "쉬는 시간", start: "11:20", end: "11:30" },
     { type: "class", label: "4교시", start: "11:30", end: "12:10" },
     { type: "lunch", label: "점심시간", start: "12:10", end: "13:10" },
     { type: "class", label: "5교시", start: "13:10", end: "13:50" },
-    { type: "break", start: "13:50", end: "14:00" },
+    { type: "break", label: "쉬는 시간", start: "13:50", end: "14:00" },
     { type: "class", label: "6교시", start: "14:00", end: "14:40" }
 ];
 
@@ -182,57 +182,51 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // 1. Clock Face
+    // Background and Ticks logic remains the same
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
-    bgGrad.addColorStop(0, "#ffffff");
-    bgGrad.addColorStop(1, "#fff0f6"); 
-    ctx.beginPath(); 
-    ctx.arc(150,150,133,0,Math.PI*2); 
-    ctx.fillStyle=bgGrad; 
-    ctx.fill();
-
-    // 2. Ticks
+    bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
+    ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
     for(let i=0;i<60;i++){
-        let angle=i*Math.PI/30; 
-        let isMajor = i % 5 === 0;
-        let len = isMajor ? 14 : 6;
+        let angle=i*Math.PI/30; let isMajor = i % 5 === 0; let len = isMajor ? 14 : 6;
         let x1=150+Math.cos(angle)*(125-len); let y1=150+Math.sin(angle)*(125-len);
         let x2=150+Math.cos(angle)*125; let y2=150+Math.sin(angle)*125;
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-        ctx.strokeStyle = isMajor ? "#ff66a3" : "#ffb3d9"; 
-        ctx.lineWidth = isMajor ? 4 : 2; ctx.lineCap = "round"; ctx.stroke();
+        ctx.strokeStyle = isMajor ? "#ff66a3" : "#ffb3d9"; ctx.lineWidth = isMajor ? 4 : 2; ctx.lineCap = "round"; ctx.stroke();
     }
   
     let active = blocks.find(b => mins >= toMin(b.start) && mins <= toMin(b.end));
-    let label = "자유 시간 🎀"; let color = "#ffb3d9"; let total = 0; let remain = 0;
+    let label = "자유 시간 🎀"; 
+    let color = "#cccccc"; // Default Free Time Grey
+    let total = 0; let remain = 0;
 
     const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
-    const workEnd = toMin("16:30");
+    const workEnd = (todayEn === "Wednesday") ? toMin("13:50") : toMin("14:40");
 
-    // FUNCTION: Pre-school Countdown (00:00 to 09:00)
-    if (isWorkday && mins < toMin("09:00")) {
-        label = "곧 1교시 시작! 🎒";
-        color = "#ff80bf";
-        total = toMin("09:00");
-        remain = toMin("09:00") - mins;
-    } else if (isWorkday && active) {
+    // RING LOGIC OVERHAUL
+    if (isWorkday && active) {
         label = active.label;
-        color = active.type==="break" ? "#00bfff" : "#ff1a75";
+        if(active.type === "class") color = "#ff1a75"; // Red
+        else if(active.type === "break") color = "#00bfff"; // Blue
+        else if(active.type === "lunch") color = "#ffd700"; // Yellow
+        
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
-    } else if (isWeekend || (isWorkday && mins >= workEnd)) {
-        color = "#ff66a3";
-        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
-        let mon = new Date(now);
-        let day = mon.getDay();
-        let diff = (day === 0) ? 1 : (day === 6) ? 2 : (8 - day);
-        if (isWorkday && mins >= workEnd) diff = (day === 5) ? 3 : 1;
-        mon.setDate(now.getDate() + diff); mon.setHours(8, 30, 0, 0);
-        total = 48 * 60; 
-        remain = (mon.getTime() - now.getTime()) / (1000 * 60);
+    } else {
+        // Free Time logic (Grey)
+        color = "#cccccc";
+        if (isWorkday && mins < toMin("09:00")) {
+            label = "수업 준비 중 ☕";
+            total = toMin("09:00");
+            remain = toMin("09:00") - mins;
+        } else {
+            label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
+            // For general free time, we pulse based on the hour for visual effect
+            total = 60;
+            remain = 60 - (now.getMinutes() + now.getSeconds()/60);
+        }
     }
 
-    // 3. Pulsing Ring
+    // DRAW RING
     if(total > 0 && remain > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
@@ -245,7 +239,6 @@ function drawClock(){
         ctx.restore();
     }
 
-    // 4. Digital Clock
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
     ctx.fillStyle="#ff80bf"; ctx.font="bold 14px Arial"; ctx.textAlign="center";
@@ -256,7 +249,6 @@ function drawClock(){
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 
-    // FUNCTION: Row Highlighting
     document.querySelectorAll("#scheduleTable tr").forEach(row => {
         const start = row.dataset.start; const end = row.dataset.end;
         if (start && end) {
@@ -271,40 +263,23 @@ setInterval(drawClock, 50);
 
 function startEmojiRain() {
   setInterval(() => {
-    const cur = new Date();
-    const day = cur.getDay(); 
-    const hr = cur.getHours();
-    const minsNow = hr * 60 + cur.getMinutes();
-    const workEndMins = 16 * 60 + 30; 
-
+    const cur = new Date(); const day = cur.getDay(); const hr = cur.getHours();
+    const minsNow = hr * 60 + cur.getMinutes(); const workEndMins = 16 * 60 + 30; 
     let mode = "OFF";
-
-    // Lockdown Logic: 00:00 Mon to 16:30 Fri is OFF.
-    if (day === 5 && minsNow >= workEndMins) {
-        mode = "WEEKEND";
-    } else if (day === 6) {
-        mode = "WEEKEND";
-    } else if (day === 0) {
-        mode = (hr >= 21) ? "POO" : "WEEKEND";
-    }
-
+    if (day === 5 && minsNow >= workEndMins) mode = "WEEKEND";
+    else if (day === 6) mode = "WEEKEND";
+    else if (day === 0) mode = (hr >= 21) ? "POO" : "WEEKEND";
     if (mode === "OFF") return;
-
     let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; 
-    if (mode === "POO") {
-        emojis = ['💩', '😭'];
-    } else {
+    if (mode === "POO") emojis = ['💩', '😭'];
+    else {
         if (currentCondition === "Rain" || currentCondition === "Drizzle") emojis = [...emojis, '☔', '💧', '☁️', '🐸'];
         else if (currentCondition === "Snow") emojis = [...emojis, '❄️', '⛄', '🤍', '🌬️'];
     }
-
-    const e = document.createElement('div');
-    e.className = 'falling-emoji';
+    const e = document.createElement('div'); e.className = 'falling-emoji';
     e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    e.style.left = Math.random() * 100 + 'vw';
-    e.style.animationDuration = (Math.random() * 3 + 2) + 's';
-    document.body.appendChild(e);
-    setTimeout(() => e.remove(), 5000);
+    e.style.left = Math.random() * 100 + 'vw'; e.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    document.body.appendChild(e); setTimeout(() => e.remove(), 5000);
   }, 350);
 }
 startEmojiRain();
