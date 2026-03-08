@@ -183,12 +183,18 @@ const canvas=document.getElementById("clock");
 const ctx=canvas.getContext("2d");
 function toMin(t){let[h,m]=t.split(":"); return h*60+m;}
 
+let pulseGlow = 0;
+let pulseDir = 1;
+
 function drawClock(){
     let now = new Date();
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
+    
+    // Background Circle
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle="white"; ctx.fill();
 
+    // Clock Marks
     for(let i=0;i<60;i++){
         let angle=i*Math.PI/30; let len=i%5==0?15:7;
         let x1=150+Math.cos(angle)*(113-len); let y1=150+Math.sin(angle)*(113-len);
@@ -220,12 +226,29 @@ function drawClock(){
         remain = (mon.getTime() - now.getTime()) / (1000 * 60);
     }
 
+    // PULSING COUNTDOWN RING
     if(total > 0 && remain > 0){
         let percent = remain / total;
-        ctx.beginPath(); ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
-        ctx.lineWidth = 6; ctx.strokeStyle = color; ctx.stroke();
+        
+        // Pulse logic update
+        pulseGlow += 0.4 * pulseDir;
+        if(pulseGlow > 12 || pulseGlow < 0) pulseDir *= -1;
+
+        ctx.save();
+        ctx.beginPath(); 
+        ctx.arc(150,150,133,-Math.PI/2, -Math.PI/2 + percent * 2 * Math.PI);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = color;
+        
+        // Apply glow to the ring
+        ctx.shadowBlur = pulseGlow;
+        ctx.shadowColor = color;
+        
+        ctx.stroke();
+        ctx.restore();
     }
 
+    // Digital Time
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2,"0"); let s = now.getSeconds().toString().padStart(2,"0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
     ctx.fillStyle="#ff3399"; ctx.font="bold 26px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
@@ -233,7 +256,7 @@ function drawClock(){
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
 }
-setInterval(drawClock, 100);
+setInterval(drawClock, 50); // Faster refresh for smooth pulsing
 
 function startEmojiRain() {
   setInterval(() => {
