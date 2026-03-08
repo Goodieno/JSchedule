@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>재희's Teacher Timer</title>
+<title>Hello Kitty Teacher Timer</title>
 
 <style>
 /* ================= ANIMATIONS ================= */
@@ -80,8 +80,8 @@ th{color:white; background:#ffb3d9;}
 <div id="periodLabel"></div>
 
 <div id="info">
-<div id="weather">날씨 불러오는 중...</div>
-<div id="air">미세먼지 불러오는 중...</div>
+<div id="weather">🌤 날씨 불러오는 중...</div>
+<div id="air">😷 미세먼지 불러오는 중...</div>
 </div>
 
 <table id="scheduleTable">
@@ -214,8 +214,7 @@ function drawClock(){
     if (isWorkday && mins < schoolStart) {
         label = "수업 준비 중 ☕";
         color = "#cccccc";
-        // OPTION 1: 9-hour block from Midnight to 9 AM
-        total = schoolStart; 
+        total = schoolStart; // 540 minutes total (Midnight to 9 AM)
         remain = schoolStart - mins;
     } else if (isWorkday && mins < workEnd && active) {
         label = active.label;
@@ -238,7 +237,8 @@ function drawClock(){
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
         ctx.save();
         ctx.beginPath(); 
-        ctx.arc(150,150,140,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
+        // Radius set to 130 to prevent edge clipping
+        ctx.arc(150,150,130,-Math.PI/2, -Math.PI/2 + (percent * 2 * Math.PI));
         ctx.lineWidth = 10; ctx.strokeStyle = color; ctx.lineCap = "round";
         ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
         ctx.restore();
@@ -314,7 +314,7 @@ try{
     const res=await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${geoData[0].lat}&lon=${geoData[0].lon}&appid=${API_KEY}`);
     const data=await res.json();
     const levels=["좋음 😊","보통 🙂","그저그럼 😐","나쁨 😷","매우나쁨 ☠️"];
-    document.getElementById("air").textContent=`😷미세먼지: ${levels[data.list[0].main.aqi-1]}`;
+    document.getElementById("air").textContent=`미세먼지: ${levels[data.list[0].main.aqi-1]}`;
 }catch{ document.getElementById("air").textContent="미세먼지 확인 불가 😷"; }
 }
 loadAir();
