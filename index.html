@@ -139,9 +139,9 @@ const blocks = [
 ];
 
 const table = document.getElementById("scheduleTable");
-const isWeekendDay = (todayEn === "Saturday" || todayEn === "Sunday");
+const isWeekend = (todayEn === "Saturday" || todayEn === "Sunday");
 
-if (isWeekendDay) {
+if (isWeekend) {
   table.innerHTML = "<tr><td colspan='2' style='font-size:22px; padding:30px;'>🎀 즐거운 주말 🎀</td></tr>";
 } else {
   let classIndex = 0;
@@ -197,25 +197,27 @@ function drawClock(){
     const isWednesday = (todayEn === "Wednesday");
     const schoolStart = toMin("09:00");
     const workEnd = isWednesday ? toMin("13:50") : toMin("14:40");
-    const fridayEnd = toMin("16:30");
+
+    let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
+    
+    if (isWednesday && mins >= workEnd) {
+        active = null;
+    }
 
     let label = "자유 시간 🎀"; 
     let color = "#cccccc"; 
-    let total = 0; 
-    let remain = 0;
+    let total = 60; 
+    let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60)); 
 
-    let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
-    if (isWednesday && mins >= workEnd) active = null;
+    const isWorkday = (now.getDay() >= 1 && now.getDay() <= 5);
 
-    // 1. MONDAY MORNING LOGIC (00:00 - 09:00)
-    if (todayEn === "Monday" && mins < schoolStart) {
-        label = "월요일 아침 ☕";
-        color = "#ff99cc";
-        total = schoolStart; // Countdown from Midnight
+    if (isWorkday && mins < schoolStart) {
+        label = "수업 준비 중 ☕";
+        color = "#cccccc";
+        // OPTION 1: 9-hour block from Midnight to 9 AM
+        total = schoolStart; 
         remain = schoolStart - mins;
-    }
-    // 2. ACTIVE CLASS/BREAK
-    else if (active) {
+    } else if (isWorkday && mins < workEnd && active) {
         label = active.label;
         if(active.type === "class") color = "#ff1a75"; 
         else if(active.type === "break") color = "#00bfff"; 
@@ -223,53 +225,14 @@ function drawClock(){
         
         total = toMin(active.end) - toMin(active.start);
         remain = toMin(active.end) - mins;
-    } 
-    // 3. WEEKEND LOGIC (Fri 16:30 to Sun 23:59)
-    else if ((todayEn === "Friday" && mins >= fridayEnd) || todayEn === "Saturday" || todayEn === "Sunday") {
-        label = "🫶 즐거운 주말 🫶";
-        color = "#00d4ff";
-        
-        let weekendEnd = new Date(now);
-        // Find coming Sunday
-        let daysToSunday = (7 - now.getDay()) % 7;
-        weekendEnd.setDate(now.getDate() + daysToSunday);
-        weekendEnd.setHours(23, 59, 59, 999);
-
-        let weekendStart = new Date(now);
-        if (todayEn === "Friday") {
-            weekendStart.setHours(16, 30, 0, 0);
-        } else if (todayEn === "Saturday") {
-            weekendStart.setDate(now.getDate() - 1);
-            weekendStart.setHours(16, 30, 0, 0);
-        } else { // Sunday
-            weekendStart.setDate(now.getDate() - 2);
-            weekendStart.setHours(16, 30, 0, 0);
-        }
-
-        total = (weekendEnd - weekendStart) / (1000 * 60);
-        remain = (weekendEnd - now) / (1000 * 60);
-    }
-    // 4. GENERAL CLASS GAPS
-    else if (mins < workEnd) {
-        let nextBlock = blocks.find(b => mins < toMin(b.start));
-        if (nextBlock) {
-            label = "대기 중... ⌛";
-            color = "#ff99cc";
-            let lastBlock = [...blocks].reverse().find(b => mins >= toMin(b.end));
-            let startOfGap = lastBlock ? toMin(lastBlock.end) : 0;
-            total = toMin(nextBlock.start) - startOfGap;
-            remain = toMin(nextBlock.start) - mins;
-        }
-    } 
-    // 5. AFTER SCHOOL FREE TIME
-    else {
-        label = "자유 시간 🙏";
+    } else {
+        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         color = "#cccccc";
         total = 60;
         remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
     }
 
-    if(total > 0 && remain > 0){
+    if(total > 0){
         let percent = remain / total;
         pulseGlow += 0.4 * pulseDir;
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
