@@ -31,7 +31,7 @@ overflow-x: hidden;
 }
 h2{margin:10px 0;cursor:pointer; color:#ff1a75;}
 #clockBox{margin:auto;width:320px; height:320px; display:flex; align-items:center; justify-content:center;}
-canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9;}
+canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9; image-rendering: -webkit-optimize-contrast;}
 #periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
 #info{margin-top:20px; font-size:18px;}
 #weather,#air{font-weight:bold; margin-top:5px; color:#ff66a3;}
@@ -122,6 +122,8 @@ const dayNames = {
 
 const now = new Date();
 const todayEn = now.toLocaleDateString('en-US', { weekday: 'long' });
+const currentMinsTotal = now.getHours() * 60 + now.getMinutes();
+
 document.getElementById("today").textContent = `🎀 ${dayNames[todayEn] || todayEn} 🎀`;
 
 const blocks = [
@@ -139,14 +141,16 @@ const blocks = [
 ];
 
 const table = document.getElementById("scheduleTable");
-const isWeekend = (todayEn === "Saturday" || todayEn === "Sunday");
+const isWeekendView = (todayEn === "Saturday" || todayEn === "Sunday") || (todayEn === "Friday" && currentMinsTotal >= (16*60+30));
 
-if (isWeekend) {
+if (isWeekendView) {
   table.innerHTML = "<tr><td colspan='2' style='font-size:22px; padding:30px;'>🎀 즐거운 주말 🎀</td></tr>";
 } else {
   let classIndex = 0;
   blocks.forEach((b) => {
     if (b.type === "break") return;
+    if (todayEn === "Wednesday" && b.label === "6교시") return; // Wednesday 6th period hidden
+    
     let row = document.createElement("tr");
     row.dataset.start = b.start; row.dataset.end = b.end;
     let p = document.createElement("td");
@@ -182,7 +186,6 @@ function drawClock(){
     let mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
     ctx.clearRect(0,0,300,300);
     
-    // Background and Ticks
     let bgGrad = ctx.createRadialGradient(150,150,50, 150,150,133);
     bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6"); 
     ctx.beginPath(); ctx.arc(150,150,133,0,Math.PI*2); ctx.fillStyle=bgGrad; ctx.fill();
@@ -197,39 +200,33 @@ function drawClock(){
     const isWednesday = (todayEn === "Wednesday");
     const schoolStart = toMin("09:00");
     const workEnd = isWednesday ? toMin("13:50") : toMin("14:40");
-    const weekendStartMin = toMin("16:30"); // Friday 4:30 PM
+    const weekendStartMin = toMin("16:30"); 
 
     let label = "자유 시간 🎀"; 
     let color = "#cccccc"; 
     let total = 60; 
     let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
 
-    // Priority 1: MONDAY MORNING GAP (00:00 - 09:00)
     if (todayEn === "Monday" && mins < schoolStart) {
         label = "월요일 아침 ☕";
         color = "#ff99cc";
         total = schoolStart; 
         remain = schoolStart - mins;
     }
-    // Priority 2: WEEKEND (Friday 16:30 to Sunday 23:59)
     else if ((todayEn === "Friday" && mins >= weekendStartMin) || todayEn === "Saturday" || todayEn === "Sunday") {
         label = "🫶 즐거운 주말 🫶";
         color = "#00d4ff";
-        
         let sunEnd = new Date(now);
         let daysToSun = (7 - now.getDay()) % 7;
         sunEnd.setDate(now.getDate() + daysToSun);
         sunEnd.setHours(23, 59, 59, 999);
-
         let friStart = new Date(now);
         if (todayEn === "Friday") friStart.setHours(16,30,0,0);
         else if (todayEn === "Saturday") { friStart.setDate(now.getDate()-1); friStart.setHours(16,30,0,0); }
         else { friStart.setDate(now.getDate()-2); friStart.setHours(16,30,0,0); }
-
         total = (sunEnd - friStart) / (1000 * 60);
         remain = (sunEnd - now) / (1000 * 60);
     }
-    // Priority 3: SCHOOL TIME BLOCKS
     else if (mins >= schoolStart && mins < workEnd) {
         let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
         if (active) {
@@ -240,9 +237,9 @@ function drawClock(){
             total = toMin(active.end) - toMin(active.start);
             remain = toMin(active.end) - mins;
         } else {
-            // Class Gaps
             let nextBlock = blocks.find(b => mins < toMin(b.start));
-            if (nextBlock) {
+            // Ensure Wednesday doesn't wait for a 6th period
+            if (nextBlock && (todayEn !== "Wednesday" || nextBlock.label !== "6교시")) {
                 label = "대기 중... ⌛";
                 color = "#ff99cc";
                 let lastBlock = [...blocks].reverse().find(b => mins >= toMin(b.end));
@@ -252,7 +249,6 @@ function drawClock(){
             }
         }
     }
-    // Priority 4: WEEKDAY FREE TIME
     else {
         label = "자유 시간 🙏";
         color = "#cccccc";
@@ -285,15 +281,8 @@ function drawClock(){
     document.querySelectorAll("#scheduleTable tr").forEach(row => {
         const start = row.dataset.start; const end = row.dataset.end;
         if (start && end) {
-            const [sh, sm] = start.split(":").map(Number);
-            const [eh, em] = end.split(":").map(Number);
-            const isCurrent = (mins >= (sh * 60 + sm) && mins < (eh * 60 + em));
-            
-            if (isWednesday && toMin(start) >= toMin("13:50")) {
-                row.classList.remove("currentClass");
-            } else {
-                row.classList.toggle("currentClass", isCurrent);
-            }
+            const isCurrent = (mins >= toMin(start) && mins < toMin(end));
+            row.classList.toggle("currentClass", isCurrent);
         }
     });
 }
@@ -302,7 +291,7 @@ setInterval(drawClock, 50);
 function startEmojiRain() {
   setInterval(() => {
     const cur = new Date(); const day = cur.getDay(); const hr = cur.getHours();
-    const minsNow = hr * 60 + cur.getMinutes(); const workEndMins = 16 * 60 + 30; 
+    const minsNow = hr * 60 + cur.getMinutes(); 
     let mode = "OFF";
     if (day === 5 && minsNow >= (16*60+30)) mode = "WEEKEND";
     else if (day === 6) mode = "WEEKEND";
