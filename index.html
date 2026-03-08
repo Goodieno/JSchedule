@@ -80,8 +80,8 @@ th{color:white; background:#ffb3d9;}
 <div id="periodLabel"></div>
 
 <div id="info">
-<div id="weather">🎀 날씨 불러오는 중...</div>
-<div id="air">🌸 미세먼지 불러오는 중...</div>
+<div id="weather">🌥 날씨 불러오는 중...</div>
+<div id="air">😷 미세먼지 불러오는 중...</div>
 </div>
 
 <table id="scheduleTable">
@@ -210,7 +210,7 @@ function drawClock(){
         remain = toMin(active.end) - mins;
     } else if (isWeekend || (isWorkday && mins >= workEnd)) {
         color = "#ff66a3";
-        label = isWeekend ? "🎀 즐거운 주말 🎀" : "자유 시간 🎀";
+        label = isWeekend ? "🫶 즐거운 주말 🫶" : "자유 시간 🙏";
         let mon = new Date(now);
         let day = mon.getDay();
         let diff = (day === 0) ? 1 : (day === 6) ? 2 : (8 - day);
@@ -239,7 +239,7 @@ function startEmojiRain() {
   setInterval(() => {
     const cur = new Date();
     const isPooTime = (cur.getDay() === 0 && cur.getHours() >= 21);
-    const emojis = isPooTime ? ['💩'] : ['🐱', '🎀', '🌸', '💖', '✨'];
+    const emojis = isPooTime ? ['💩', '😭'] : ['🐱', '🎀', '🌸', '💖', '✨'];
     
     const e = document.createElement('div');
     e.className = 'falling-emoji';
