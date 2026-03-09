@@ -268,7 +268,7 @@ function drawClock(){
     }
 
     if(total > 0){
-        let percent = remain / total;
+        let percent = Math.max(0, remain / total);
         pulseGlow += 0.4 * pulseDir;
         if(pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
         ctx.save();
