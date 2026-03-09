@@ -188,7 +188,7 @@ function drawClock() {
     let mins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     ctx.clearRect(0, 0, 300, 300);
 
-    // 1. Background
+    // 1. Background Circle
     let bgGrad = ctx.createRadialGradient(150, 150, 50, 150, 150, 133);
     bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fff0f6");
     ctx.beginPath(); ctx.arc(150, 150, 133, 0, Math.PI * 2); ctx.fillStyle = bgGrad; ctx.fill();
@@ -210,9 +210,9 @@ function drawClock() {
     let label = "자유 시간 🎀";
     let color = "#888888";
     let total = 60;
-    let remain = 60 - (now.getMinutes() + (now.getSeconds() / 60));
+    let remain = 0;
 
-    // 3. Logic
+    // 3. Status Logic
     if (todayEn === "Monday" && mins < schoolStart) {
         label = "월요일 아침 ☕"; color = "#ff99cc";
         total = schoolStart; remain = schoolStart - mins;
@@ -222,25 +222,23 @@ function drawClock() {
         let daysToSun = (7 - now.getDay()) % 7;
         sunEnd.setDate(now.getDate() + daysToSun);
         sunEnd.setHours(23, 59, 59, 999);
-        let friStart = new Date(now);
-        if (todayEn === "Friday") friStart.setHours(16, 30, 0, 0);
-        else if (todayEn === "Saturday") { friStart.setDate(now.getDate() - 1); friStart.setHours(16, 30, 0, 0); }
-        else { friStart.setDate(now.getDate() - 2); friStart.setHours(16, 30, 0, 0); }
-        total = (sunEnd - friStart) / (1000 * 60); remain = (sunEnd - now) / (1000 * 60);
+        total = 1440; // Default view for weekend
+        remain = (sunEnd - now) / (1000 * 60);
     } else if (mins >= schoolStart && mins < workEnd) {
         let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
         if (active) {
             label = active.label;
-            if (active.type === "class") color = "#ff0000";
-            else if (active.type === "break") color = "#0066ff";
-            else if (active.type === "lunch") color = "#ffd700";
-            else if (active.type === "prep") color = "#00aa55";
+            if (active.type === "class") color = "#ff4d4d"; // Red
+            else if (active.type === "break") color = "#3399ff"; // Blue
+            else if (active.type === "lunch") color = "#ffcc00"; // Gold
+            else if (active.type === "prep") color = "#20b2aa"; // Teal
             total = toMin(active.end) - toMin(active.start);
             remain = toMin(active.end) - mins;
         } else {
+            // "In-between" or waiting periods
             let nextBlock = blocks.find(b => mins < toMin(b.start));
-            if (nextBlock && (todayEn !== "Wednesday" || nextBlock.label !== "6교시")) {
-                label = "대기 중... ⌛"; color = "#ff99cc";
+            if (nextBlock) {
+                label = "준비 중... ⌛"; color = "#ff99cc";
                 let lastBlock = [...blocks].reverse().find(b => mins >= toMin(b.end));
                 let startOfGap = lastBlock ? toMin(lastBlock.end) : schoolStart;
                 total = toMin(nextBlock.start) - startOfGap;
@@ -249,6 +247,54 @@ function drawClock() {
         }
     }
 
+    // 4. Drawing the Ring (Visual Timer Mode)
+    if (total > 0) {
+        // Percent of time REMAINING
+        let percent = Math.max(0, Math.min(1, remain / total));
+        
+        pulseGlow += 0.4 * pulseDir;
+        if (pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
+
+        ctx.save();
+        // Faint background track
+        ctx.beginPath();
+        ctx.arc(150, 150, 138, 0, Math.PI * 2);
+        ctx.strokeStyle = color; ctx.globalAlpha = 0.1; ctx.lineWidth = 10;
+        ctx.stroke();
+
+        // Pulsing Ring (Drains clockwise)
+        ctx.globalAlpha = 1.0;
+        ctx.beginPath();
+        // Drawing from top (-90deg) to the remaining percentage
+        ctx.arc(150, 150, 138, -Math.PI / 2, -Math.PI / 2 + (percent * 2 * Math.PI), false);
+        ctx.lineWidth = 12; ctx.strokeStyle = color; ctx.lineCap = "round";
+        ctx.shadowBlur = pulseGlow; ctx.shadowColor = color; ctx.stroke();
+        ctx.restore();
+    }
+
+    // 5. Digital Time Display
+    let h = now.getHours(); let m = now.getMinutes().toString().padStart(2, "0"); let s = now.getSeconds().toString().padStart(2, "0");
+    let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
+    ctx.fillStyle = "#ff80bf"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
+    ctx.fillText(ampm, 150, 135);
+    ctx.fillStyle = "#ff1a75"; ctx.font = "bold 32px Arial"; ctx.textAlign = "center";
+    ctx.fillText(`${h}:${m}:${s}`, 150, 165);
+
+    // Update Label
+    document.getElementById("periodLabel").textContent = label;
+    document.getElementById("periodLabel").style.color = color;
+
+    // 6. Fix Schedule Table Highlighting
+    document.querySelectorAll("#scheduleTable tr").forEach(row => {
+        const start = row.dataset.start; const end = row.dataset.end;
+        if (start && end) {
+            const startM = toMin(start);
+            const endM = toMin(end);
+            const isCurrent = (mins >= startM && mins < endM);
+            row.classList.toggle("currentClass", isCurrent);
+        }
+    });
+}
     // 4. Drawing the Ring
     if (total > 0) {
         let percent = 1 - Math.max(0, Math.min(1, remain / total));
