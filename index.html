@@ -59,6 +59,9 @@ transform:scale(1.02);
   background: rgba(255, 230, 242, 0.9);
   display: none; align-items: center; justify-content: center; z-index: 1000;
 }
+#scheduleTable tr{
+transition: all 0.25s ease;
+}
 #weekBox {
   background: white;
   padding: 20px;
@@ -156,7 +159,6 @@ if (isWeekendView) {
 } else {
   let classIndex = 0;
   blocks.forEach((b) => {
-    if (b.type === "break") return;
     if (todayEn === "Wednesday" && b.label === "6교시") return;
     
     let row = document.createElement("tr");
