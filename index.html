@@ -6,7 +6,6 @@
 <title>재희's Teacher Timer</title>
 
 <style>
-/* ================= ANIMATIONS ================= */
 .falling-emoji {
   position: fixed;
   top: -50px;
@@ -19,7 +18,6 @@
   to { transform: translateY(110vh) rotate(360deg); }
 }
 
-/* ================= THEME & LAYOUT ================= */
 body{
 background:#ffe6f2; 
 font-family:'Malgun Gothic', Arial;
@@ -29,43 +27,60 @@ margin:0;
 padding:20px;
 overflow-x: hidden;
 }
+
 h2{margin:10px 0;cursor:pointer; color:#ff1a75;}
-#clockBox{margin:auto;width:320px; height:320px; display:flex; align-items:center; justify-content:center;}
-canvas{background:white; border-radius:50%; box-shadow:0 0 20px rgba(255,102,178,.4); border: 8px solid #ffb3d9; image-rendering: -webkit-optimize-contrast;}
+
+#clockBox{margin:auto;width:320px;height:320px;display:flex;align-items:center;justify-content:center;}
+
+canvas{
+background:white;
+border-radius:50%;
+box-shadow:0 0 20px rgba(255,102,178,.4);
+border: 8px solid #ffb3d9;
+}
+
 #periodLabel{font-size:22px;font-weight:bold;margin-top:10px;}
-#info{margin-top:20px; font-size:18px;}
-#weather,#air{font-weight:bold; margin-top:5px; color:#ff66a3;}
 
-table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:400px; background:white; border-radius:15px; overflow:hidden;}
+#info{margin-top:20px;font-size:18px;}
+
+#weather,#air{font-weight:bold;margin-top:5px;color:#ff66a3;}
+
+table{
+margin:auto;
+margin-top:20px;
+border-collapse:collapse;
+width:95%;
+max-width:400px;
+background:white;
+border-radius:15px;
+overflow:hidden;
+}
+
 th,td{padding:10px;border-bottom:1px solid #ffe6f2;}
-th{color:white; background:#ffb3d9;}
 
-.currentClass{ background:#fff0f5 !important; box-shadow:0 0 15px rgba(255,51,133,0.4); font-weight:bold; }
-.prepPeriod { color: #20b2aa !important; } 
-.lunchText { color: #ff3399; font-weight: bold; }
-.periodTime { font-size: 10px; color: #ff99cc; margin-right: 5px; display: none; }
-#scheduleTable td:hover .periodTime, #scheduleTable td:active .periodTime { display: inline; }
+th{color:white;background:#ffb3d9;}
 
-/* WEEK POPUP */
-#weekPopup {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(255, 230, 242, 0.9);
-  display: none; align-items: center; justify-content: center; z-index: 1000;
+.currentClass{
+background:#fff0f5 !important;
+box-shadow:0 0 15px rgba(255,51,133,0.4);
+font-weight:bold;
 }
-#weekBox {
-  background: white;
-  padding: 20px;
-  border-radius: 20px;
-  width: 95%;
-  max-width: 600px;
-  color: #ff4d94;
-  border: 4px solid #ffb3d9;
+
+.prepPeriod{color:#20b2aa !important;}
+
+.lunchText{color:#ff3399;font-weight:bold;}
+
+.periodTime{
+font-size:10px;
+color:#ff99cc;
+margin-right:5px;
+display:none;
 }
-#weekBox h3 { margin-top: 0; text-align: center; color: #ff1a75; }
-#weekTable { width: 100%; border-collapse: collapse; text-align: center; }
-#weekTable th { background: #ffcce6; color: #ff3385; padding: 8px; }
-#weekTable td { padding: 10px; border-top: 1px solid #ffe6f2; color: #ff4d94; font-size: 13px; }
+
+#scheduleTable td:hover .periodTime,
+#scheduleTable td:active .periodTime{
+display:inline;
+}
 </style>
 </head>
 
@@ -88,43 +103,140 @@ th{color:white; background:#ffb3d9;}
 <tr><th>교시</th><th>과목</th></tr>
 </table>
 
-<div id="weekPopup">
-<div id="weekBox">
-<h3>🎀 5학년 주간 시간표 🎀</h3>
-<table id="weekTable">
-<tr><th>교시</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
-<tr><td>1교시</td><td>수학</td><td>수학</td><td>국어</td><td><span class="prepPeriod">영어</span></td><td>국어</td></tr>
-<tr><td>2교시</td><td>국어</td><td><span class="prepPeriod">체육</span></td><td>수학</td><td>국어</td><td><span class="prepPeriod">체육</span></td></tr>
-<tr><td>3교시</td><td><span class="prepPeriod">영어</span></td><td>국어</td><td>사회</td><td>수학</td><td>사회</td></tr>
-<tr><td>4교시</td><td><span class="prepPeriod">과학</span></td><td>사회</td><td>실과</td><td><span class="prepPeriod">과학</span></td><td>과학</td></tr>
-<tr><td>5교시</td><td>음악</td><td>미술</td><td><span class="prepPeriod">영어</span></td><td>실과</td><td><span class="prepPeriod">도덕</span></td></tr>
-<tr><td>6교시</td><td>창체</td><td>미술</td><td>-</td><td>음악</td><td>창체</td></tr>
-</table>
-</div>
-</div>
-
 <script>
 
+const schedule = {
+  Monday: ["수학", "국어", "영어", "과학", "음악", "창체"],
+  Tuesday: ["수학", "체육", "국어", "사회", "미술", "미술"],
+  Wednesday: ["국어", "수학", "사회", "실과", "영어"],
+  Thursday: ["영어", "국어", "수학", "과학", "실과", "음악"],
+  Friday: ["국어", "체육", "사회", "과학(교실)", "도덕", "창체"]
+};
+
+const now = new Date();
+const todayEn = now.toLocaleDateString('en-US', { weekday: 'long' });
+
 const blocks = [
-{type:"prep",label:"준비 시간",start:"08:30",end:"09:00"},
-{type:"class",label:"1교시",start:"09:00",end:"09:40"},
-{type:"break",label:"쉬는 시간",start:"09:40",end:"09:50"},
-{type:"class",label:"2교시",start:"09:50",end:"10:30"},
-{type:"break",label:"쉬는 시간",start:"10:30",end:"10:40"},
-{type:"class",label:"3교시",start:"10:40",end:"11:20"},
-{type:"break",label:"쉬는 시간",start:"11:20",end:"11:30"},
-{type:"class",label:"4교시",start:"11:30",end:"12:10"},
-{type:"lunch",label:"점심시간",start:"12:10",end:"13:10"},
-{type:"class",label:"5교시",start:"13:10",end:"13:50"},
-{type:"break",label:"쉬는 시간",start:"13:50",end:"14:00"},
-{type:"class",label:"6교시",start:"14:00",end:"14:40"},
-{type:"prep",label:"준비 시간",start:"14:40",end:"16:30"}
+{ type:"prep",label:"준비 시간",start:"08:30",end:"09:00"},
+
+{ type:"class",label:"1교시",start:"09:00",end:"09:40"},
+{ type:"break",label:"쉬는 시간",start:"09:40",end:"09:50"},
+
+{ type:"class",label:"2교시",start:"09:50",end:"10:30"},
+{ type:"break",label:"쉬는 시간",start:"10:30",end:"10:40"},
+
+{ type:"class",label:"3교시",start:"10:40",end:"11:20"},
+{ type:"break",label:"쉬는 시간",start:"11:20",end:"11:30"},
+
+{ type:"class",label:"4교시",start:"11:30",end:"12:10"},
+
+{ type:"lunch",label:"점심시간",start:"12:10",end:"13:10"},
+
+{ type:"class",label:"5교시",start:"13:10",end:"13:50"},
+{ type:"break",label:"쉬는 시간",start:"13:50",end:"14:00"},
+
+{ type:"class",label:"6교시",start:"14:00",end:"14:40"}
 ];
 
-function getPrepStart(){
-return (todayEn==="Wednesday") ? "13:50" : "14:40";
+const canvas=document.getElementById("clock");
+const ctx=canvas.getContext("2d");
+
+function toMin(t){
+let[h,m]=t.split(":");
+return h*60+m;
 }
 
-function getPrepEnd(){
-return "16:30";
+function drawClock(){
+
+let now=new Date();
+let mins=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+
+ctx.clearRect(0,0,300,300);
+
+const isWednesday=(todayEn==="Wednesday");
+
+const prepEnd=isWednesday?toMin("13:50"):toMin("14:40");
+
+let label="자유 시간";
+let color="#888888";
+let total=60;
+let remain=60-(now.getMinutes()+now.getSeconds()/60);
+
+if(mins>=toMin("08:30") && mins<toMin("09:00")){
+label="준비 시간";
+color="#00aa55";
+total=30;
+remain=toMin("09:00")-mins;
 }
+
+else if(mins>=toMin("09:00") && mins<prepEnd){
+
+let active=blocks.find(b=>mins>=toMin(b.start)&&mins<toMin(b.end));
+
+if(active){
+
+label=active.label;
+
+if(active.type==="class") color="#ff0000";
+else if(active.type==="break") color="#0066ff";
+else if(active.type==="lunch") color="#ffd700";
+
+total=toMin(active.end)-toMin(active.start);
+remain=toMin(active.end)-mins;
+}
+}
+
+else if(mins>=prepEnd && mins<toMin("16:30")){
+
+label="준비 시간";
+color="#00aa55";
+
+total=toMin("16:30")-prepEnd;
+remain=toMin("16:30")-mins;
+
+}
+
+else if(todayEn==="Friday" && mins>=toMin("16:30")
+|| todayEn==="Saturday"
+|| todayEn==="Sunday"){
+
+label="자유 🎀";
+color="#ff66cc";
+
+let sunEnd=new Date(now);
+let daysToSun=(7-now.getDay())%7;
+
+sunEnd.setDate(now.getDate()+daysToSun);
+sunEnd.setHours(23,59,59,999);
+
+let friStart=new Date(now);
+friStart.setHours(16,30,0,0);
+
+total=(sunEnd-friStart)/(1000*60);
+remain=(sunEnd-now)/(1000*60);
+
+}
+
+if(total>0){
+
+let percent=remain/total;
+
+ctx.beginPath();
+ctx.arc(150,150,140,-Math.PI/2,-Math.PI/2+(percent*2*Math.PI));
+ctx.lineWidth=10;
+ctx.strokeStyle=color;
+ctx.lineCap="round";
+ctx.stroke();
+
+}
+
+document.getElementById("periodLabel").textContent=label;
+document.getElementById("periodLabel").style.color=color;
+
+}
+
+setInterval(drawClock,50);
+
+</script>
+</body>
+</html>
