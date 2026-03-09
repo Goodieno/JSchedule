@@ -251,7 +251,7 @@ function drawClock() {
 
     // 4. Drawing the Ring
     if (total > 0) {
-        let percent = Math.max(0, Math.min(1, remain / total));
+        let percent = 1 - Math.max(0, Math.min(1, remain / total));
         pulseGlow += 0.4 * pulseDir;
         if (pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
 
