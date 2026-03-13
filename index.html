@@ -40,7 +40,6 @@ table{margin:auto;margin-top:20px;border-collapse:collapse;width:95%;max-width:4
 th,td{padding:12px;border-bottom:1px solid #fff0f5;}
 th{color:white; background:#ffc2d4;}
 
-/* Dynamic Highlighting Classes */
 .currentClass { font-weight:bold; transform: scale(1.02); transition: all 0.3s ease; }
 .prepPeriod { color: #9b8cff !important; font-weight: bold; } 
 .lunchText { color: #fbc02d; font-weight: bold; }
@@ -108,14 +107,13 @@ th{color:white; background:#ffc2d4;}
 const API_KEY="fa9fe37b9be14839fe6774643939e974";
 let currentCondition = "default"; 
 
-// --- COLORS (Pastel) ---
 const COLORS = {
-    class: "#ffadad",  // Pastel Red
-    lunch: "#ffd6a5",  // Pastel Yellow
-    break: "#a0c4ff",  // Pastel Blue
-    prep:  "#bdb2ff",  // Pastel Purple
-    free:  "#d3d3d3",  // Pastel Gray
-    accent: "#ff80bf"
+    class: "#ffadad",
+    lunch: "#ffd6a5",
+    break: "#a0c4ff",
+    prep:  "#bdb2ff",
+    free:  "#ff80bf", // Accent pink for weekend
+    default: "#d3d3d3"
 };
 
 const schedule = {
@@ -190,7 +188,7 @@ if (isWeekendView) {
 
 const canvas=document.getElementById("clock");
 const ctx=canvas.getContext("2d");
-function toMin(t){let[h,m]=t.split(":"); return h*60+parseInt(m);}
+function toMin(t){let[h,m]=t.split(":"); return parseInt(h)*60+parseInt(m);}
 
 let pulseGlow = 0;
 let pulseDir = 1;
@@ -200,12 +198,8 @@ function drawClock() {
     let mins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     ctx.clearRect(0, 0, 300, 300);
 
-    // 1. Background Circle
-    let bgGrad = ctx.createRadialGradient(150, 150, 50, 150, 150, 133);
-    bgGrad.addColorStop(0, "#ffffff"); bgGrad.addColorStop(1, "#fffcfd");
-    ctx.beginPath(); ctx.arc(150, 150, 133, 0, Math.PI * 2); ctx.fillStyle = bgGrad; ctx.fill();
+    ctx.beginPath(); ctx.arc(150, 150, 133, 0, Math.PI * 2); ctx.fillStyle = "white"; ctx.fill();
 
-    // 2. Ticks
     for (let i = 0; i < 60; i++) {
         let angle = i * Math.PI / 30; let isMajor = i % 5 === 0; let len = isMajor ? 14 : 6;
         let x1 = 150 + Math.cos(angle) * (125 - len); let y1 = 150 + Math.sin(angle) * (125 - len);
@@ -214,33 +208,16 @@ function drawClock() {
         ctx.strokeStyle = isMajor ? "#ffb3d1" : "#ffe0eb"; ctx.lineWidth = isMajor ? 4 : 2; ctx.lineCap = "round"; ctx.stroke();
     }
 
-    const schoolStart = toMin("08:30");
-    const isWednesday = (todayEn === "Wednesday");
-    const workEnd = isWednesday ? toMin("13:50") : toMin("16:30");
-    const weekendStartMin = toMin("16:30");
-
     let label = "자유 시간 🎀";
-    let color = COLORS.free;
-    let total = 60;
+    let color = COLORS.default;
+    let total = 0;
     let remain = 0;
 
-    // 3. Status Logic
-    if (todayEn === "Monday" && mins < schoolStart) {
-        label = "월요일 아침 ☕"; color = COLORS.prep;
-        total = schoolStart; remain = schoolStart - mins;
-    } else if ((todayEn === "Friday" && mins >= weekendStartMin) || todayEn === "Saturday" || todayEn === "Sunday") {
-        label = "자유 🎀"; color = COLORS.free;
-        let sunEnd = new Date(now);
-        let daysToSun = (7 - now.getDay()) % 7;
-        sunEnd.setDate(now.getDate() + daysToSun);
-        sunEnd.setHours(23, 59, 59, 999);
-        total = 1440; 
-        remain = (sunEnd - now) / (1000 * 60);
-    } else if (mins >= schoolStart && mins < workEnd) {
+    if (!isWeekendView) {
         let active = blocks.find(b => mins >= toMin(b.start) && mins < toMin(b.end));
         if (active) {
             label = active.label;
-            color = COLORS[active.type] || COLORS.free;
+            color = COLORS[active.type] || COLORS.default;
             total = toMin(active.end) - toMin(active.start);
             remain = toMin(active.end) - mins;
         } else {
@@ -248,24 +225,52 @@ function drawClock() {
             if (nextBlock) {
                 label = "준비 중... ⌛"; color = COLORS.prep;
                 let lastBlock = [...blocks].reverse().find(b => mins >= toMin(b.end));
-                let startOfGap = lastBlock ? toMin(lastBlock.end) : schoolStart;
+                let startOfGap = lastBlock ? toMin(lastBlock.end) : toMin("08:30");
                 total = toMin(nextBlock.start) - startOfGap;
                 remain = toMin(nextBlock.start) - mins;
             }
         }
+    } else {
+        // ================= VERIFIED WEEKEND COUNTDOWN =================
+        color = COLORS.free;
+        
+        let target = new Date(now);
+        let daysUntilMonday = (1 + 7 - now.getDay()) % 7;
+        if (daysUntilMonday === 0 && now.getHours() >= 0) {
+            daysUntilMonday = 7; 
+        }
+        target.setDate(now.getDate() + daysUntilMonday);
+        target.setHours(0, 0, 0, 0); 
+        
+        let startOfWeekend = new Date(now);
+        let daysSinceFriday = (now.getDay() + 2) % 7; 
+        startOfWeekend.setDate(now.getDate() - daysSinceFriday);
+        startOfWeekend.setHours(16, 30, 0, 0);
+
+        let totalWeekendMs = target - startOfWeekend;
+        let remainingMs = target - now;
+
+        remain = Math.max(0, remainingMs / 60000);
+        total = totalWeekendMs / 60000;
+
+        let diffHrs = Math.floor(remainingMs / 3600000);
+        let diffMins = Math.floor((remainingMs % 3600000) / 60000);
+        
+        if (remainingMs > 0) {
+            label = `주말까지: ${diffHrs}시간 ${diffMins}분 🎀`;
+        } else {
+            label = "월요일이 왔어요! 🌸";
+        }
     }
 
-    // 4. Drawing the Ring (Visual Timer Mode: Drains clockwise)
     if (total > 0) {
         let percent = Math.max(0, Math.min(1, remain / total));
         pulseGlow += 0.4 * pulseDir;
         if (pulseGlow > 14 || pulseGlow < 0) pulseDir *= -1;
 
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(150, 150, 138, 0, Math.PI * 2);
-        ctx.strokeStyle = color; ctx.globalAlpha = 0.15; ctx.lineWidth = 10;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(150, 150, 138, 0, Math.PI * 2);
+        ctx.strokeStyle = color; ctx.globalAlpha = 0.15; ctx.lineWidth = 10; ctx.stroke();
 
         ctx.globalAlpha = 1.0;
         ctx.beginPath();
@@ -275,34 +280,16 @@ function drawClock() {
         ctx.restore();
     }
 
-    // 5. Digital Time Display
     let h = now.getHours(); let m = now.getMinutes().toString().padStart(2, "0"); let s = now.getSeconds().toString().padStart(2, "0");
     let ampm = h >= 12 ? "오후" : "오전"; h = h % 12 || 12;
-    ctx.fillStyle = COLORS.accent; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
+    ctx.fillStyle = "#ff80bf"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
     ctx.fillText(ampm, 150, 135);
     ctx.fillStyle = "#ff1a75"; ctx.font = "bold 32px Arial"; ctx.textAlign = "center";
     ctx.fillText(`${h}:${m}:${s}`, 150, 165);
 
     document.getElementById("periodLabel").textContent = label;
     document.getElementById("periodLabel").style.color = color;
-
-    // 6. Schedule Table Highlighting with Dynamic Pastel Colors
-    document.querySelectorAll("#scheduleTable tr").forEach(row => {
-        const start = row.dataset.start; const end = row.dataset.end;
-        const type = row.dataset.type;
-        if (start && end) {
-            const startM = toMin(start);
-            const endM = toMin(end);
-            const isCurrent = (mins >= startM && mins < endM);
-            row.classList.toggle("currentClass", isCurrent);
-            row.style.backgroundColor = isCurrent ? COLORS[type] : "transparent";
-            // Ensure text is readable on dark pastels
-            if(isCurrent) row.style.color = (type === 'free') ? "#666" : "#444";
-            else row.style.color = "";
-        }
-    });
 }
-
 setInterval(drawClock, 50);
 
 function startEmojiRain() {
@@ -316,10 +303,6 @@ function startEmojiRain() {
     if (mode === "OFF") return;
     let emojis = ['🐱', '🎀', '🌸', '💖', '✨']; 
     if (mode === "POO") emojis = ['💩', '😭'];
-    else {
-        if (currentCondition === "Rain" || currentCondition === "Drizzle") emojis = [...emojis, '☔', '💧', '☁️', '🐸'];
-        else if (currentCondition === "Snow") emojis = [...emojis, '❄️', '⛄', '🤍', '🌬️'];
-    }
     const e = document.createElement('div'); e.className = 'falling-emoji';
     e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
     e.style.left = Math.random() * 100 + 'vw'; e.style.animationDuration = (Math.random() * 3 + 2) + 's';
